@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { ArrowRight, Upload } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { Building2, User, Mail, Phone, Lock, Upload, ArrowRight } from 'lucide-react';
+import { Button, Input, FieldRow } from '@/components/ui';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -21,10 +22,7 @@ export default function SignUpPage() {
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setLogoPreview(url);
-    }
+    if (file) setLogoPreview(URL.createObjectURL(file));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,176 +38,100 @@ export default function SignUpPage() {
         phone,
         department: 'Executive Administration',
         job_position: 'HR Admin & Founder',
-        avatar_url: logoPreview || 'https://images.unsplash.com/photo-1572021335469-31706a17aaef?w=150',
+        avatar_url: logoPreview,
         about: `Founder & HR Admin at ${companyName || 'Dayflow Organization'}.`,
       });
 
       login(profile.login_id, password);
-      router.push('/employees');
+      router.push('/dashboard');
     }, 600);
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-10 px-4">
-      <div className="max-w-xl w-full bg-zinc-950 border border-zinc-800 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
-        {/* Header */}
-        <div className="text-center space-y-2 mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-white text-black mb-1 shadow-md">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <h2 className="text-2xl font-extrabold text-white tracking-tight">
-            Register Dayflow HR Workspace
-          </h2>
-          <p className="text-xs text-zinc-400 font-mono">
-            Every workday, perfectly aligned.
-          </p>
+    <div className="hr-auth">
+      <div className="hr-auth-card is-wide">
+        <div className="hr-auth-head">
+          <span className="hr-brand-mark hr-auth-mark" aria-hidden />
+          <h1>Create your workspace</h1>
+          <p className="hr-subtext">Sets up the admin account that runs payroll and approvals.</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Company Name & Logo */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Company Name *
-              </label>
-              <div className="relative">
-                <Building2 className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  required
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  placeholder="e.g. Dayflow Global Tech"
-                  className="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-                />
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="hr-auth-form">
+          <Input
+            label="Company name"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            placeholder="Acme Industries"
+            required
+          />
 
-            <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Company Logo
-              </label>
-              <label className="flex items-center justify-center space-x-2 border border-dashed border-zinc-700 hover:border-white rounded-xl p-2 cursor-pointer bg-black hover:bg-zinc-900 transition-all">
-                {logoPreview ? (
-                  <img src={logoPreview} alt="Logo" className="w-6 h-6 rounded object-cover" />
-                ) : (
-                  <Upload className="w-4 h-4 text-zinc-400" />
-                )}
-                <span className="text-xs text-zinc-400 font-medium">
-                  {logoPreview ? 'Uploaded' : 'Upload'}
-                </span>
-                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
-              </label>
-            </div>
-          </div>
+          <FieldRow>
+            <Input
+              label="First name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Sarah"
+              required
+            />
+            <Input
+              label="Last name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Jenkins"
+              required
+            />
+          </FieldRow>
 
-          {/* Admin Name */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Admin First Name *
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  placeholder="e.g. Sarah"
-                  className="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-                />
-              </div>
-            </div>
+          <FieldRow>
+            <Input
+              label="Work email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="sarah@acme.com"
+              required
+            />
+            <Input
+              label="Phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+91 98765 43210"
+            />
+          </FieldRow>
 
-            <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Admin Last Name *
-              </label>
-              <input
-                type="text"
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="e.g. Jenkins"
-                className="w-full bg-black border border-zinc-800 rounded-xl px-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-              />
-            </div>
-          </div>
+          <Input
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            autoComplete="new-password"
+            hint="You will use this with the login ID generated for you."
+            required
+          />
 
-          {/* Email & Phone */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Work Email *
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@company.com"
-                  className="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 019-2834"
-                  className="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-xs font-bold text-zinc-300 mb-1 uppercase tracking-wider">
-              Admin Password *
+          <div className="hr-form-group">
+            <label className="hr-form-label">Company logo</label>
+            <label className="hr-upload">
+              {logoPreview ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoPreview} alt="Logo preview" className="hr-upload-preview" />
+              ) : (
+                <Upload size={16} aria-hidden />
+              )}
+              <span>{logoPreview ? 'Change logo' : 'Upload a logo (optional)'}</span>
+              <input type="file" accept="image/*" onChange={handleLogoUpload} hidden />
             </label>
-            <div className="relative">
-              <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
-              <input
-                type="password"
-                required
-                minLength={6}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Minimum 6 characters"
-                className="w-full bg-black border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-white"
-              />
-            </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-xl bg-white hover:bg-zinc-200 text-black font-extrabold text-sm shadow-xl transition-all duration-200 mt-2"
-          >
-            <span>{isSubmitting ? 'Creating HR Workspace...' : 'Initialize Company & Log In'}</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          <Button type="submit" loading={isSubmitting} icon={<ArrowRight size={15} />} className="w-full">
+            {isSubmitting ? 'Creating workspace…' : 'Create workspace'}
+          </Button>
         </form>
 
-        <div className="text-center pt-4 border-t border-zinc-800 mt-4">
-          <p className="text-xs text-zinc-400">
-            Already registered?{' '}
-            <Link href="/sign-in" className="text-white font-bold underline">
-              Sign In
-            </Link>
-          </p>
-        </div>
+        <p className="hr-auth-foot">
+          Already have an account? <Link href="/sign-in">Sign in</Link>
+        </p>
       </div>
     </div>
   );

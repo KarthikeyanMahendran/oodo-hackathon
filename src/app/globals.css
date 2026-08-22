@@ -1,24 +1,13 @@
-@import "tailwindcss";
+/* Entry stylesheet — pure CSS, no framework.
+   Order matters: tokens define the variables everything else consumes. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-@layer base {
-  body {
-    @apply bg-black text-zinc-100 antialiased min-h-screen font-sans selection:bg-zinc-800 selection:text-white;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-}
-
-/* Custom crisp monochrome scrollbars */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
-}
+@import '../styles/tokens.css';
+@import '../styles/components.css';
+@import '../styles/overlays.css';
+@import '../styles/modules/shell.css';
+@import '../styles/modules/employees.css';
+@import '../styles/modules/payroll.css';
+@import '../styles/modules/auth.css';
+@import '../styles/modules/hr-modules.css';
+@import '../styles/utilities.css';
