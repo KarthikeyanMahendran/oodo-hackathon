@@ -251,6 +251,8 @@
   padding: var(--space-xl);
   max-width: 1500px;
   width: 100%;
+  /* Never let a wide child stretch the page instead of scrolling itself. */
+  min-width: 0;
 }
 .hr-stack {
   display: flex;
@@ -263,6 +265,15 @@
   inset: 0;
   background: rgba(17, 24, 39, 0.4);
   z-index: 55;
+}
+
+/* 13–14" laptops: reclaim 24px of width from the sidebar and tighten the
+   content gutter, so the two-column panels stay comfortable rather than
+   collapsing to a single column. */
+@media (min-width: 1025px) and (max-width: 1450px) {
+  :root { --sidebar-width: 216px; }
+  .hr-content { padding: var(--space-lg); }
+  .hr-sidenav-item { font-size: 14px; padding: 9px 11px; gap: 10px; }
 }
 
 @media (max-width: 1024px) {

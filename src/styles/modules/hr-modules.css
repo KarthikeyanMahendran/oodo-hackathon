@@ -461,6 +461,10 @@ a.hr-btn-secondary {
   gap: var(--space-md);
   align-items: start;
 }
+/* Grid items default to min-width:auto, so a wide table refuses to shrink and
+   pushes the whole page past the viewport. Overriding to 0 lets the column
+   shrink and hands scrolling back to .hr-table-wrapper's own overflow-x. */
+.hr-split > * { min-width: 0; }
 .hr-panel-head {
   display: flex;
   align-items: flex-start;
@@ -754,6 +758,7 @@ a.hr-btn-secondary {
   gap: var(--space-md);
   align-items: start;
 }
+.hr-profile-layout > * { min-width: 0; }
 
 .hr-profile-panel {
   position: sticky;
