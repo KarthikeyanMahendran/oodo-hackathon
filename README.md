@@ -123,6 +123,8 @@ Run them in order in the Supabase SQL editor:
 
 Migration `002` also **backfills**: it reads the existing `department` / `job_position` text columns, creates the corresponding rows, populates the foreign keys, seeds three leave types, migrates any `time_off` rows, and allocates the current year's balances.
 
+**Starting from an empty project instead?** [`db_schema/four.sql`](db_schema/four.sql) creates the core tables, enums, e-signature and add-on tables in one idempotent script. Follow it with migrations `002`–`003` for the normalised org structure and deactivation support. [`db_schema/seed_auth.sql`](db_schema/seed_auth.sql) then creates Supabase Auth users linked to the seeded profiles.
+
 ### Entity relationships
 
 ```mermaid
