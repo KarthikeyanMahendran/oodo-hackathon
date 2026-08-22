@@ -15,18 +15,16 @@ DO $$ BEGIN CREATE TYPE leave_status      AS ENUM ('PENDING', 'APPROVED', 'REJEC
 CREATE TABLE IF NOT EXISTS public.profiles (
     id                   UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     login_id             VARCHAR(50) UNIQUE NOT NULL,
-    role                 user_role DEFAULT 'EMPLOYEE'::user_role,
+    role                 user_role DEFAULT 'EMPLOYEE'::user_role NOT NULL,
     first_name           VARCHAR(100) NOT NULL,
     last_name            VARCHAR(100) NOT NULL,
-    department           VARCHAR(100),
-    manager_id           UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
-    avatar_url           TEXT,
-    created_at           TIMESTAMPTZ DEFAULT NOW(),
-    must_change_password BOOLEAN DEFAULT TRUE,
     email                VARCHAR(255),
     phone                VARCHAR(50),
+    department           VARCHAR(100),
     job_position         VARCHAR(100),
     date_of_joining      DATE,
+    manager_id           UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    avatar_url           TEXT,
     about                TEXT,
     skills               TEXT[],
     certifications       TEXT[],
@@ -37,12 +35,34 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     date_of_birth        DATE,
     bank_name            VARCHAR(100),
     bank_account_number  VARCHAR(100),
-    bank_ifsc            VARCHAR(50)
+    bank_ifsc            VARCHAR(50),
+    must_change_password BOOLEAN DEFAULT FALSE,
+    created_at           TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+    updated_at           TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- ---------------------------------------------------------------------------
--- 3. salaries — one row per employee
--- ---------------------------------------------------------------------------
+-- Ensure all optional columns exist if table was created previously without them
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS job_position VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS date_of_joining DATE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS about TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS skills TEXT[];
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS certifications TEXT[];
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS personal_email VARCHAR(255);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS nationality VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS gender VARCHAR(20);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS date_of_birth DATE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_ifsc VARCHAR(50);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+-- 3. Salaries Table
+>>>>>>> feature/esign-and-password-reset
 CREATE TABLE IF NOT EXISTS public.salaries (
     id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id            UUID NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
