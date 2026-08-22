@@ -122,10 +122,10 @@ export async function POST(request: Request) {
       success: true,
       profile: finalProfile,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[admin] /api/users/create endpoint error:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to create user' },
+      { success: false, error: (err instanceof Error ? err.message : 'Failed to create user') },
       { status: 500 }
     );
   }

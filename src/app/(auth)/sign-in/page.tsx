@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
@@ -198,9 +197,6 @@ export default function SignInPage() {
 
           {isLoading && <p className="hr-form-hint">Loading directory…</p>}
 
-          <p className="hr-auth-foot">
-            Need an admin workspace? <Link href="/sign-up">Register here</Link>
-          </p>
         </div>
       </div>
 

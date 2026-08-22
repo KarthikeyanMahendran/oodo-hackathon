@@ -21,7 +21,7 @@ export async function GET() {
       success: true,
       envelopes: data,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json({
       success: true,
       source: 'memory_fallback',

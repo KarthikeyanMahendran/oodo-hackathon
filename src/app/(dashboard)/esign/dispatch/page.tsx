@@ -393,7 +393,7 @@ function StepConfigure({
           {draggingField && (
             <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
               <div className="px-4 py-2 rounded-xl bg-amber-500/20 border-2 border-dashed border-amber-500 text-amber-700 dark:text-amber-300 text-xs font-bold backdrop-blur-sm">
-                Drop "{FIELD_TYPES.find((f) => f.id === draggingField)?.label}" here
+                Drop &quot;{FIELD_TYPES.find((f) => f.id === draggingField)?.label}&quot; here
               </div>
             </div>
           )}

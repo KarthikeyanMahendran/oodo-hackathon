@@ -120,9 +120,9 @@ export async function POST(request: Request) {
       docuseal_submission_id: finalSubmissionId,
       envelope: newEnvelopeRecord,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to create envelope' },
+      { success: false, error: (err instanceof Error ? err.message : 'Failed to create envelope') },
       { status: 500 }
     );
   }
