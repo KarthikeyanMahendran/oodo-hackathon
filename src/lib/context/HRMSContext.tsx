@@ -12,6 +12,7 @@ import {
 } from '../types/hrms';
 import { calculateSalaryBreakdown, SalaryBreakdown } from '../utils/salaryCalculator';
 import { supabase } from '../supabase/client';
+import { safeWrite } from '../supabase/write';
 
 export function generateLoginId(firstName: string, lastName: string, year = '2026', seq = 1): string {
   const f = (firstName || 'EM').trim().substring(0, 2).toUpperCase().padEnd(2, 'X');
@@ -372,19 +373,13 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setAttendanceLogs((prev) => [newLog, ...prev.filter((l) => !(l.user_id === currentUser.id && l.date === TODAY))]);
 
-      (async () => {
-        try {
-          await supabase.from('attendance').upsert({
-            user_id: currentUser.id,
-            date: TODAY,
-            check_in: now.toISOString(),
-            status: 'PRESENT',
-            notes,
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      })();
+      void safeWrite('attendance', 'upsert', {
+        user_id: currentUser.id,
+        date: TODAY,
+        check_in: now.toISOString(),
+        status: 'PRESENT',
+        notes,
+      });
     } else {
       setIsPunchedIn(false);
 
@@ -402,20 +397,19 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
       );
 
-      (async () => {
-        try {
-          await supabase.from('attendance').update({
-            check_out: now.toISOString(),
-          }).eq('user_id', currentUser.id).eq('date', TODAY);
-        } catch (err) {
-          console.error(err);
-        }
+      void (async () => {
+        const { error } = await supabase
+          .from('attendance')
+          .update({ check_out: now.toISOString() })
+          .eq('user_id', currentUser.id)
+          .eq('date', TODAY);
+        if (error) console.error('[supabase] attendance check-out failed:', error.message);
       })();
     }
   };
 
   const addEmployee = (empData: Omit<Profile, 'id' | 'created_at' | 'login_id'> & { initialSalary?: number }) => {
-    const newId = `emp-${Date.now()}`;
+    const newId = crypto.randomUUID();
     const seqNum = employees.length + 1;
     const autoLoginId = generateLoginId(empData.first_name, empData.last_name, '2026', seqNum);
     const tempPass = `Welcome@${Math.floor(1000 + Math.random() * 9000)}`;
@@ -440,25 +434,18 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const wage = empData.initialSalary || 75000;
     updateSalary(newId, wage);
 
-    (async () => {
-      try {
-        await supabase.from('profiles').insert([
-          {
-            id: newId,
-            login_id: autoLoginId,
-            role: newProfile.role,
-            first_name: newProfile.first_name,
-            last_name: newProfile.last_name,
-            email: newProfile.email,
-            phone: newProfile.phone,
-            department: newProfile.department,
-            avatar_url: newProfile.avatar_url,
-          },
-        ]);
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    void safeWrite('profiles', 'insert', {
+      id: newId,
+      login_id: autoLoginId,
+      role: newProfile.role,
+      first_name: newProfile.first_name,
+      last_name: newProfile.last_name,
+      email: newProfile.email,
+      phone: newProfile.phone,
+      department: newProfile.department,
+      job_position: newProfile.job_position,
+      avatar_url: newProfile.avatar_url,
+    });
 
     return { profile: newProfile, tempPass };
   };
@@ -471,13 +458,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser((prev) => (prev ? { ...prev, ...updated } : prev));
     }
 
-    (async () => {
-      try {
-        await supabase.from('profiles').update(updated).eq('id', updated.id);
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    const { id, ...changes } = updated;
+    void safeWrite('profiles', 'update', changes, { column: 'id', value: id });
   };
 
   const updateSalary = (userId: string, fixedWage: number, period: WagePeriod = 'MONTHLY') => {
@@ -500,21 +482,15 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setSalaries((prev) => ({ ...prev, [userId]: sal }));
 
-    (async () => {
-      try {
-        await supabase.from('salaries').upsert({
-          user_id: userId,
-          fixed_wage: sal.fixed_wage,
-          basic_salary: sal.basic_salary,
-          hra: sal.hra,
-          standard_allowance: sal.standard_allowance,
-          pf: sal.pf,
-          tax: sal.tax,
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    void safeWrite('salaries', 'upsert', {
+      user_id: userId,
+      fixed_wage: sal.fixed_wage,
+      basic_salary: sal.basic_salary,
+      hra: sal.hra,
+      standard_allowance: sal.standard_allowance,
+      pf: sal.pf,
+      tax: sal.tax,
+    });
   };
 
   const getSalaryBreakdown = (userId: string): SalaryBreakdown => {
@@ -537,21 +513,15 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setTimeOffRequests((prev) => [newReq, ...prev]);
 
-    (async () => {
-      try {
-        await supabase.from('time_off').insert({
-          user_id: req.user_id,
-          type: req.type,
-          start_date: req.start_date,
-          end_date: req.end_date,
-          reason: req.reason,
-          document_url: req.document_url,
-          status: 'PENDING',
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    void safeWrite('time_off', 'insert', {
+      user_id: req.user_id,
+      type: req.type,
+      start_date: req.start_date,
+      end_date: req.end_date,
+      reason: req.reason,
+      document_url: req.document_url,
+      status: 'PENDING',
+    });
   };
 
   const handleTimeOffAction = (id: string, status: 'APPROVED' | 'REJECTED', comment?: string) => {
@@ -559,16 +529,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       prev.map((r) => (r.id === id ? { ...r, status, admin_comment: comment || null } : r))
     );
 
-    (async () => {
-      try {
-        await supabase.from('time_off').update({
-          status,
-          admin_comment: comment || null,
-        }).eq('id', id);
-      } catch (err) {
-        console.error(err);
-      }
-    })();
+    void safeWrite('time_off', 'update', { status, admin_comment: comment || null }, { column: 'id', value: id });
   };
 
   const getUserLeaveBalance = (userId: string): LeaveBalance => {

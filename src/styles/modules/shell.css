@@ -1,0 +1,193 @@
+/* ============================================
+   APP SHELL — navbar, page frame, footer
+   ============================================ */
+
+.hr-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.hr-navbar-inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+/* --- Brand --- */
+.hr-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.hr-brand-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--primary);
+  position: relative;
+}
+.hr-brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: 6px 6px auto auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white);
+}
+.hr-brand-name {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+/* --- Links --- */
+.hr-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+.hr-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+.hr-nav-link:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+.hr-nav-link.active {
+  background: var(--primary-subtle);
+  color: var(--text);
+  font-weight: 600;
+}
+.hr-nav-count {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* --- Right cluster --- */
+.hr-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+.hr-nav-user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 8px 4px 4px;
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+.hr-nav-user:hover { background: var(--surface-sunken); }
+.hr-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+.hr-nav-user-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.hr-nav-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.hr-nav-user-role {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.hr-nav-toggle { display: none; }
+.hr-nav-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  border-top: 1px solid var(--border);
+}
+
+/* --- Page frame --- */
+.hr-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+}
+.hr-footer {
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-md);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-subtle);
+}
+
+/* --- Section spacing --- */
+.hr-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 900px) {
+  .hr-nav-links { display: none; }
+  .hr-nav-toggle { display: inline-flex; }
+  .hr-nav-mobile { display: flex; }
+  .hr-nav-user-meta { display: none; }
+  .hr-navbar-inner { padding: 0 var(--space-md); }
+  .hr-main { padding: var(--space-lg) var(--space-md) var(--space-xl); }
+}
+
+.hr-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

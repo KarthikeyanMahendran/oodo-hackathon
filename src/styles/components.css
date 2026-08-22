@@ -1,0 +1,1402 @@
+/* ============================================
+   COMPONENT SYSTEM — cards, tables, badges,
+   inputs, tabs, buttons, form layouts
+   ============================================ */
+
+/* Disable spinners and up/down arrows in all input[type="number"] globally */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  margin: 0 !important;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield !important;
+  appearance: textfield !important;
+}
+
+/* --- Base Cards --- */
+.hr-card,
+.hr-card,
+.hr-stat-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.hr-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.hr-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+
+
+.hr-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.hr-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.hr-stat-change {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.hr-stat-icon {
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  font-size: 64px;
+  opacity: 0.05;
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+
+.hr-dark-card {
+  background: linear-gradient(135deg, #000, #898989);
+  box-shadow: 0 4px 20px #0ba36026;
+  color: #fff !important;
+  border: none !important;
+  margin: 0;
+}
+
+.hr-dark-card .hr-stat-label {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.hr-dark-card .hr-stat-value {
+  color: #fff !important;
+}
+
+.hr-dark-card .hr-stat-icon {
+  color: #fff !important;
+  opacity: 0.1;
+}
+
+.hr-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-md);
+}
+
+.hr-card-interactive {
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.hr-card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gray-300);
+}
+
+.hr-card.is-interactive:hover,
+.hr-stat-card:hover {
+  box-shadow: var(--shadow-card-hover);
+  transform: translateY(-4px);
+  border-color: var(--gray-300);
+}
+
+.hr-card.is-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* --- Base Tables --- */
+.hr-table-wrapper,
+.hr-table-wrapper {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.hr-table,
+.hr-table,
+.gst-table,
+.settings-table,
+.print-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 13px;
+  text-align: left;
+}
+
+.hr-table thead th,
+.hr-table thead th,
+.gst-table thead th,
+.settings-table thead th,
+.print-table thead th {
+  background: var(--gray-50);
+  color: var(--gray-600);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--gray-200);
+  white-space: nowrap;
+}
+
+.hr-table tbody td,
+.hr-table tbody td,
+.gst-table tbody td,
+.settings-table tbody td,
+.print-table tbody td {
+  padding: 8px 14px;
+  color: var(--gray-700);
+  border-bottom: 1px solid var(--gray-100);
+  vertical-align: middle;
+  transition: var(--transition-fast);
+}
+
+.hr-table tbody tr:hover td,
+.hr-table tbody tr:hover td,
+.gst-table tbody tr:hover td,
+.settings-table tbody tr:hover td {
+  background: var(--gray-50);
+  color: var(--gray-900);
+}
+
+.u-table-header-actions {
+  width: 80px !important;
+  text-align: right !important;
+}
+
+.hr-pagination {
+  padding: 16px;
+  border-top: 1px solid var(--gray-100);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.hr-pagination span {
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+/* --- Base Badges --- */
+.hr-badge,
+.hr-badge,
+.status-badge,
+.stock-badge,
+.reports-stock-badge,
+.product-code-badge,
+.product-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.hr-badge.is-soft,
+.hr-badge.is-soft {
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.hr-badge.is-success,
+.hr-badge.is-success,
+.badge-success {
+  background: #DCFCE7;
+  color: #166534;
+  border: 1px solid #BBF7D0;
+}
+
+.hr-badge.is-warning,
+.hr-badge.is-warning {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FDE68A;
+}
+
+.hr-badge.is-danger,
+.hr-badge.is-danger,
+.badge-danger {
+  background: #FEF2F2;
+  color: #DC2626;
+  border: 1px solid #FECACA;
+}
+
+.hr-badge.is-info,
+.hr-badge.is-info,
+.badge-info {
+  background: #EFF6FF;
+  color: #0369A1;
+  border: 1px solid #DBEAFE;
+}
+
+.hr-badge.is-neutral,
+.hr-badge.is-neutral {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border: 1px solid var(--gray-200);
+}
+
+.hr-input,
+.hr-select,
+.hr-textarea,
+.hr-modal-body input,
+.hr-modal-body textarea,
+.hr-modal-body select,
+.settings-form input,
+.settings-form textarea,
+.hr-input,
+.hr-select,
+.hr-textarea,
+.hr-search-bar input,
+.search-bar-input,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+.hr-form-group input,
+.hr-form-group select,
+.hr-form-group textarea {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--gray-200);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--white);
+  color: var(--gray-800);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  line-height: 1.4;
+}
+
+/* Standalone filter selects should not stretch full width */
+.hr-filter-bar .hr-select,
+.hr-order-filters .hr-select {
+  width: auto;
+  min-width: 140px;
+  height: 40px;
+}
+
+/* Form selects and inputs inside modals/forms get fixed height */
+.hr-modal-body input:not([type="checkbox"]):not([type="radio"]),
+.hr-modal-body select,
+.hr-form-group input:not([type="checkbox"]):not([type="radio"]),
+.hr-form-group select,
+.hr-select,
+.hr-input,
+.hr-input,
+.hr-select {
+  height: 40px;
+}
+
+/* Textareas should not be height-constrained */
+.hr-textarea,
+.hr-textarea,
+.hr-modal-body textarea,
+.hr-form-group textarea {
+  height: auto;
+  min-height: 80px;
+}
+
+
+/* --- Standard Search & Input Icons --- */
+.hr-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.hr-search-icon,
+.hr-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  stroke: var(--gray-400);
+  pointer-events: none;
+  transition: stroke 0.2s;
+  z-index: 1;
+}
+
+.hr-search-bar:focus-within .hr-search-icon {
+  stroke: var(--brand-primary);
+}
+
+.hr-search-bar input {
+  padding-left: 44px !important;
+}
+
+.hr-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--gray-400);
+  cursor: pointer;
+  outline: none;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.hr-search-clear:hover {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+
+
+.hr-search-bar input,
+.search-bar-input {
+  padding: 12px 40px 12px 44px;
+}
+
+
+.hr-input::placeholder,
+.hr-textarea::placeholder,
+.hr-search-bar input::placeholder,
+.search-bar-input::placeholder {
+  color: var(--gray-400);
+  font-weight: 400;
+}
+
+
+.hr-input:hover,
+.hr-select:hover,
+.hr-textarea:hover {
+  border-color: var(--gray-300);
+}
+
+.hr-input:focus,
+.hr-select:focus,
+.hr-textarea:focus,
+.hr-modal-body input:focus,
+.hr-modal-body textarea:focus,
+.hr-modal-body select:focus,
+.settings-form input:focus,
+.settings-form textarea:focus,
+.hr-input:focus,
+.hr-textarea:focus,
+.hr-search-bar input:focus,
+.search-bar-input:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+.hr-form-group input:focus,
+.hr-form-group select:focus,
+.hr-form-group textarea:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-primary-glow);
+}
+
+/* The .hr-* aliases were missing here, so every disabled field outside the hr-* set
+   rendered as an ordinary editable-looking input unless the call site added inline styles. */
+.hr-input:disabled,
+.hr-select:disabled,
+.hr-textarea:disabled,
+.hr-input:disabled,
+.hr-select:disabled,
+.hr-textarea:disabled,
+.hr-modal-body input:disabled,
+.hr-modal-body select:disabled,
+.hr-modal-body textarea:disabled {
+  background: var(--gray-50);
+  color: var(--gray-400);
+  cursor: not-allowed;
+  border-color: var(--gray-200);
+  box-shadow: none;
+}
+
+.hr-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.hr-select,
+.hr-select,
+.hr-modal-body select,
+.hr-form-group select,
+.hr-section select,
+.hr-content-inner select,
+.hr-card select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 14px;
+  padding-right: 44px !important;
+  cursor: pointer;
+}
+
+/* --- Dropdown Button Trigger --- */
+.hr-btn-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Position the menu - defaults to left-aligned */
+.hr-btn-dropdown .hr-dropdown-menu {
+  left: 0;
+  right: auto;
+  min-width: max-content;
+}
+
+/* Right-aligned variant */
+.hr-btn-dropdown.align-right .hr-dropdown-menu {
+  left: auto;
+  right: 0;
+}
+
+/* --- Premium Dropdown Menus --- */
+.hr-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--gray-300, #cbd5e1);
+  border-radius: var(--radius, 8px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  z-index: 9999 !important;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 6px;
+  animation: hr-slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hr-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hr-dropdown-item:hover,
+.hr-dropdown-item.is-highlighted {
+  background: var(--gray-50);
+  color: var(--brand-primary);
+}
+
+.hr-dropdown-item.is-selected {
+  background: var(--brand-primary-lighter);
+  color: var(--brand-primary);
+}
+
+@keyframes hr-slideDownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+
+/* --- Tab UI System --- */
+
+/* 1. Pill Type Toggle (Segmented Control) */
+.hr-tabs-pill {
+  display: inline-flex;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
+  border: 1px solid #e2e8f0;
+  width: fit-content;
+}
+
+.hr-tabs-pill .hr-tab-btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #64748b;
+  background: transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin: 0;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.hr-tabs-pill .hr-tab-btn:hover {
+  background: #dee5ed;
+}
+
+.hr-tabs-pill .hr-tab-btn.active {
+  background: #000000;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hr-tabs-pill .hr-tab-btn .tab-count {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.hr-tabs-pill .hr-tab-btn.active .tab-count {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+/* 2. Baseline Type switch (Standard Navigation) */
+.hr-tabs-underline {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid #dcdcdc;
+  margin-bottom: 24px;
+}
+
+.hr-tabs-underline .hr-tab-btn {
+  padding: 12px 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94a3b8;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: 0;
+}
+
+.hr-tabs-underline .hr-tab-btn:hover {
+  color: #475569;
+}
+
+.hr-tabs-underline .hr-tab-btn.active {
+  color: #000000;
+  border-bottom-color: #000000;
+  font-weight: 800;
+}
+
+.hr-tabs-underline .hr-tab-btn .tab-count {
+  font-weight: 800;
+  font-size: 11px;
+  color: #94a3b8;
+  background: #f8fafc;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.hr-tabs-underline .hr-tab-btn.active .tab-count {
+  color: #000000;
+  background: #f1f5f9;
+}
+
+/* --- Loading States --- */
+.hr-loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--gray-400);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ============================================================
+   UNIFIED CTA BUTTON SYSTEM
+   7 Types: primary · secondary · cancel · danger · ghost · icon · dropdown
+   Modifiers: .is-sm · .is-full · .is-loading · .is-blue · .is-orange · .is-green
+   ============================================================ */
+
+/* --- Shared Base --- */
+.hr-btn,
+.hr-btn-primary,
+.hr-btn-secondary,
+.hr-btn-cancel,
+.hr-btn-danger,
+.hr-btn-ghost,
+.hr-btn-icon,
+button[class*="-btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 7px;
+  font-size: 12.6px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  outline: none;
+  border: 1.5px solid transparent;
+  transition: background 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.12s ease, color 0.18s ease;
+  text-decoration: none;
+  position: relative;
+}
+
+.hr-btn:active,
+.hr-btn-primary:active,
+.hr-btn-secondary:active,
+.hr-btn-cancel:active,
+.hr-btn-danger:active,
+.hr-btn-ghost:active,
+button[class*="-btn"]:active {
+  transform: scale(0.97);
+}
+
+.hr-btn-secondary:hover,
+button[class*="-btn"]:hover {
+  background: #f8fafc;
+  border-color: #0f172a;
+  color: #0f172a;
+}
+
+
+/* Disabled state */
+.hr-btn:disabled,
+.hr-btn-primary:disabled,
+.hr-btn-secondary:disabled,
+.hr-btn-cancel:disabled,
+.hr-btn-danger:disabled,
+.hr-btn-ghost:disabled,
+.hr-btn-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── 1. Primary (Save / Add / Submit) ── */
+.hr-btn-primary {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.hr-btn-primary:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.22);
+  transform: translateY(-1px);
+}
+
+/* ── 2. Secondary (Ghost / Filter / Export / View) ── */
+.hr-btn-secondary {
+  background: #ffffff;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+.hr-btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #0f172a;
+  color: #0f172a;
+}
+
+.hr-btn-secondary.active,
+.hr-btn-secondary[aria-pressed="true"] {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+/* ── 3. Cancel (Dismiss / Go Back / Close) ── */
+.hr-btn-cancel {
+  background: #ffffff;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+.hr-btn-cancel:hover {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #cbd5e1;
+}
+
+/* ── 4. Danger (Delete / Remove / Revoke) ── */
+.hr-btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.25);
+}
+
+.hr-btn-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  transform: translateY(-1px);
+}
+
+.hr-btn-danger.is-outline:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* Danger outline variant */
+.hr-btn-danger.is-outline {
+  background: transparent;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+.hr-btn-danger.is-outline:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+/* ── 4.1 Table Action Buttons (Edit & Delete Pair) ── */
+.btn-action-group,
+.hr-table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-edit {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.btn-edit:hover {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  transform: translateY(-1px);
+}
+
+.btn-edit:active {
+  transform: scale(0.95);
+}
+
+.btn-edit svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2;
+}
+
+.btn-cancel {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.btn-cancel:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-cancel:active {
+  transform: scale(0.95);
+}
+
+.btn-cancel svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+/* ── 5. Ghost (Subtle inline Edit / Text link) ── */
+.hr-btn-ghost {
+  background: transparent;
+  color: #64748b;
+  border-color: transparent;
+  padding: 7px 12px;
+}
+
+.hr-btn-ghost:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: transparent;
+}
+
+/* ── 6. Icon (Toolbar icon-only button) ── */
+.hr-btn-icon {
+  background: transparent;
+  color: #64748b;
+  border-color: transparent;
+  padding: 7px;
+  border-radius: 7px;
+  width: 34px;
+  height: 34px;
+}
+
+.hr-btn-icon:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.hr-btn-icon.is-active {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* ── Color Variants ── */
+/* Blue */
+.hr-btn-primary.is-blue,
+.hr-btn-secondary.is-blue {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+
+.hr-btn-primary.is-blue:hover,
+.hr-btn-secondary.is-blue:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+/* Orange */
+.hr-btn-primary.is-orange,
+.hr-btn-secondary.is-orange {
+  background: #ea580c;
+  color: #fff;
+  border-color: #ea580c;
+}
+
+.hr-btn-primary.is-orange:hover,
+.hr-btn-secondary.is-orange:hover {
+  background: #c2410c;
+  border-color: #c2410c;
+}
+
+/* Green */
+.hr-btn-primary.is-green,
+.hr-btn-secondary.is-green {
+  background: #16a34a;
+  color: #fff;
+  border-color: #16a34a;
+}
+
+.hr-btn-primary.is-green:hover,
+.hr-btn-secondary.is-green:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+/* ── Size Modifiers ── */
+.hr-btn-primary.is-sm,
+.hr-btn-secondary.is-sm,
+.hr-btn-cancel.is-sm,
+.hr-btn-danger.is-sm,
+.hr-btn-ghost.is-sm {
+  padding: 5px 12px;
+  font-size: 11.5px;
+  border-radius: 5px;
+}
+
+.btn-tiny {
+  padding: 4px 10px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  border-radius: 6px !important;
+  min-height: auto !important;
+  height: 28px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.hr-btn-primary.is-full,
+.hr-btn-secondary.is-full,
+.hr-btn-cancel.is-full,
+.hr-btn-danger.is-full,
+.hr-btn-ghost.is-full {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ── Loading State ── */
+.hr-btn-primary.is-loading,
+.hr-btn-secondary.is-loading,
+.hr-btn-cancel.is-loading,
+.hr-btn-danger.is-loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.hr-btn-primary.is-loading::after,
+.hr-btn-secondary.is-loading::after,
+.hr-btn-cancel.is-loading::after,
+.hr-btn-danger.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  top: 50%;
+  left: 50%;
+  margin: -7.5px 0 0 -7.5px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: hr-btn-spin 0.7s linear infinite;
+}
+
+.hr-btn-secondary.is-loading::after,
+.hr-btn-cancel.is-loading::after {
+  border: 2px solid #e2e8f0;
+  border-top-color: #64748b;
+}
+
+@keyframes hr-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Data Display --- */
+.hr-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.hr-detail-item {
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.hr-detail-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.hr-detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.hr-notes-box {
+  background: var(--gray-50);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--gray-600);
+}
+
+/* --- Global Utilities --- */
+.hr-bulk-actions-bar {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--white);
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  z-index: 100;
+  border: 1px solid var(--gray-200);
+}
+
+/* --- Migrated Layout Classes --- */
+.hr-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0 24px 32px;
+}
+
+.hr-scrollable-page {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 0px;
+  display: flex;
+  flex-direction: column;
+}
+
+.mb-md {
+  margin-bottom: 16px;
+}
+
+.hr-modal-footer {
+  margin: 14px 0 0 0;
+  padding: 14px 0px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Override the default Bootstrap-style footer */
+.hr-modal .modal-footer {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+/* --- Form Layouts --- */
+.hr-form-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.form-group small,
+.hr-form-group small,
+.settings-form-section small {
+  display: block;
+  font-size: 11px;
+  color: var(--gray-500, #64748b);
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+@media (min-width: 640px) {
+  .hr-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.grid-col-full {
+  grid-column: 1 / -1 !important;
+}
+
+/* --- Generalized Form Layout System --- */
+.hr-field-group,
+.hr-form-group,
+.hr-field-group,
+.hr-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hr-form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700, #334155);
+  margin-bottom: 6px;
+}
+
+.hr-field-full,
+.hr-field-full {
+  grid-column: 1 / -1 !important;
+}
+
+.hr-form-actions {
+  padding-top: 32px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.hr-form-mainlabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+
+/* Common Checkbox Styles */
+.hr-checkbox {
+  width: 16px !important;
+  height: 16px !important;
+  cursor: pointer;
+  accent-color: var(--brand-primary, #0f766e);
+  margin: 0;
+  border-radius: 4px;
+}
+
+.hr-wrapper,
+.hr-wrapper {
+  background: var(--white);
+  padding: 0;
+}
+
+/* ── Circle / Refresh Button ── */
+button.hr-btn-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #f5f5f5;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hr-btn-circle:hover {
+  background: #f8fafc;
+  border-color: #0f172a;
+  color: #0f172a;
+  transform: translateY(-1px);
+}
+
+.hr-btn-circle:active {
+  transform: scale(0.97);
+}
+
+.hr-hbutton-wrapper {
+  gap: 14px;
+}
+
+/* ---------------------------------------------------------------------------
+   Inline link-style button
+   The generic button[class*="-btn"] rule above gives every button a box, so
+   these declarations exist to undo it rather than to start from nothing.
+   --------------------------------------------------------------------------- */
+.hr-btn-link,
+button.hr-btn-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #475569;
+  font-size: 12.6px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.hr-btn-link:hover,
+button.hr-btn-link:hover {
+  background: transparent;
+  border: none;
+  color: #0f172a;
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+   Inline alerts
+   --------------------------------------------------------------------------- */
+.hr-alert-info,
+.hr-alert-warning,
+.hr-alert-danger,
+.hr-alert-success {
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  font-size: 12.6px;
+  line-height: 1.5;
+}
+
+.hr-alert-info {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--gray-700);
+}
+
+.hr-alert-warning {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--gray-700);
+}
+
+.hr-alert-danger {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  color: var(--gray-700);
+}
+
+.hr-alert-success {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--gray-700);
+}
+
+/* --- Card header --- */
+.hr-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  margin-bottom: var(--space-md);
+  border-bottom: 1px solid var(--border);
+}
+.hr-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.hr-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* --- Tabs shell --- */
+.hr-tabs-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.hr-tabs-content {
+  padding-top: var(--space-lg);
+}
+
+/* --- Form validation --- */
+.hr-required { color: var(--danger); }
+.hr-form-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.hr-error-text {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 4px;
+}
+.hr-input-error,
+.hr-input-error:focus {
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 3px var(--danger-bg) !important;
+}
+
+/* --- Spinner --- */
+.hr-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: hr-spin 600ms linear infinite;
+  flex-shrink: 0;
+}
+@keyframes hr-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hr-spinner { animation-duration: 2s; }
+}
+
+/* --- Neutral badge tone --- */
+.hr-badge.is-muted {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  border-color: var(--gray-200);
+}
+
+/* --- Clickable table rows --- */
+.hr-table tbody tr.is-clickable { cursor: pointer; }
+.hr-table tbody tr.is-clickable:hover { background: var(--surface-sunken); }
+
+/* --- Page header actions --- */
+.hr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
