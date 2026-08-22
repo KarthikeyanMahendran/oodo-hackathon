@@ -154,7 +154,15 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (firstError) throw firstError;
 
       const people = (profileRes.data ?? []) as Profile[];
-      setEmployees(people);
+      setEmployees((prev) => {
+        const merged = [...people];
+        for (const emp of prev) {
+          if (!merged.some((p) => p.id === emp.id || (p.email && p.email.toLowerCase() === emp.email.toLowerCase()))) {
+            merged.push(emp);
+          }
+        }
+        return merged;
+      });
 
       const salaryMap: Record<string, Salary> = {};
       for (const row of (salaryRes.data ?? []) as Salary[]) salaryMap[row.user_id] = row;
@@ -475,25 +483,44 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployees((prev) => [profile, ...prev]);
       updateSalary(newId, empData.initialSalary || 75000);
 
-      void safeWrite('profiles', 'insert', {
-        id: newId,
-        login_id: loginId,
-        role: profile.role,
-        first_name: profile.first_name,
-        last_name: profile.last_name,
-        email: profile.email,
-        phone: profile.phone,
-        department: profile.department,
-        job_position: profile.job_position,
-        department_id: profile.department_id,
-        designation_id: profile.designation_id,
-        avatar_url: profile.avatar_url,
-        must_change_password: true,
-      }).then(() => refresh());
+      void fetch('/api/users/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: newId,
+          login_id: loginId,
+          role: profile.role,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          email: profile.email,
+          phone: profile.phone,
+          department: profile.department,
+          job_position: profile.job_position,
+          department_id: profile.department_id,
+          designation_id: profile.designation_id,
+          avatar_url: profile.avatar_url,
+          initialSalary: empData.initialSalary || 75000,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.success && data?.profile) {
+            setEmployees((prev) =>
+              prev.map((e) =>
+                e.id === newId || (e.email && e.email.toLowerCase() === profile.email.toLowerCase())
+                  ? { ...e, ...data.profile }
+                  : e
+              )
+            );
+          }
+        })
+        .catch((err) => {
+          console.error('[admin] /api/users/create failed:', err);
+        });
 
       return { profile, tempPass };
     },
-    [employees.length, updateSalary, refresh]
+    [employees.length, updateSalary]
   );
 
   const updateProfile = useCallback(

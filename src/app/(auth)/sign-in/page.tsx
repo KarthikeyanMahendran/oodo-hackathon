@@ -145,29 +145,7 @@ export default function SignInPage() {
           </Button>
         </form>
 
-        {quickAccounts.length > 0 && (
-          <>
-            <div className="hr-auth-divider">
-              <span>Or continue as</span>
-            </div>
 
-            <div className="hr-auth-demos">
-              {quickAccounts.map((acc) => {
-                const Icon = acc.icon;
-                return (
-                  <button key={acc.loginId} type="button" className="hr-demo-card" onClick={() => quickLogin(acc.loginId)}>
-                    <div className="hr-demo-head">
-                      <span className="hr-demo-role">{acc.role}</span>
-                      <Icon size={14} aria-hidden />
-                    </div>
-                    <span className="hr-monospace hr-demo-id">{acc.loginId}</span>
-                    <span className="hr-cell-secondary">{acc.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
 
         {isLoading && <p className="hr-form-hint">Loading directory…</p>}
 

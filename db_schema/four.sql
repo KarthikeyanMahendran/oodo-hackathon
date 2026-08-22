@@ -155,18 +155,21 @@ ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE it_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_feed ENABLE ROW LEVEL SECURITY;
 
+-- Fix Foreign Key Constraints on Profiles (if present from legacy schema)
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fk;
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+
 -- Core Policies
 DROP POLICY IF EXISTS "Users view/update own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins full access profiles" ON profiles;
 DROP POLICY IF EXISTS "Everyone can view profiles" ON profiles;
-CREATE POLICY "Everyone can view profiles" ON profiles FOR SELECT USING (true);
-CREATE POLICY "Users update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins full access profiles" ON profiles FOR ALL USING (is_admin());
+DROP POLICY IF EXISTS "Allow all access profiles" ON profiles;
+CREATE POLICY "Allow all access profiles" ON profiles FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Users view own salary" ON salaries;
 DROP POLICY IF EXISTS "Admins full access salaries" ON salaries;
-CREATE POLICY "Users view own salary" ON salaries FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Admins full access salaries" ON salaries FOR ALL USING (is_admin());
+DROP POLICY IF EXISTS "Allow all access salaries" ON salaries;
+CREATE POLICY "Allow all access salaries" ON salaries FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Users manage own attendance" ON attendance;
 DROP POLICY IF EXISTS "Admins full access attendance" ON attendance;
