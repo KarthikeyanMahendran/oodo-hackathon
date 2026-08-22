@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 
-const BARE_ROUTES = ['/sign-in', '/sign-up'];
+const BARE_ROUTES = ['/sign-in'];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
