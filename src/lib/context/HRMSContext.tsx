@@ -4,19 +4,9 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { supabase } from '../supabase/client';
 import { safeWrite } from '../supabase/write';
 import { calculateSalaryBreakdown, type SalaryBreakdown } from '../utils/salaryCalculator';
-import type {
-  AttendanceRecord,
-  LeaveBalance,
-  Profile,
-  Salary,
-  TimeOffRecord,
-  UserRole,
-  WagePeriod,
-} from '../types/hrms';
+import type { AttendanceRecord, Profile, Salary, UserRole, WagePeriod } from '../types/hrms';
 
 const SESSION_KEY = 'hrms_active_user';
-const PAID_ENTITLEMENT = 24;
-const SICK_ENTITLEMENT = 7;
 
 /** Generated outside render so it never runs during a render pass. */
 function generateTempPassword(): string {
@@ -33,23 +23,7 @@ function todayISO(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-function inclusiveDays(start: string, end: string): number {
-  const a = new Date(start).getTime();
-  const b = new Date(end).getTime();
-  if (Number.isNaN(a) || Number.isNaN(b) || b < a) return 0;
-  return Math.floor((b - a) / 86400000) + 1;
-}
 
-/** Rows come back without the joined display fields the UI needs. */
-function decorateTimeOff(row: TimeOffRecord, people: Profile[]): TimeOffRecord {
-  const p = people.find((e) => e.id === row.user_id);
-  return {
-    ...row,
-    employee_name: p ? `${p.first_name} ${p.last_name}`.trim() : 'Unknown',
-    department: p?.department ?? '—',
-    days_count: row.days_count ?? inclusiveDays(row.start_date, row.end_date),
-  };
-}
 
 interface HRMSContextType {
   currentUser: Profile | null;
@@ -62,7 +36,6 @@ interface HRMSContextType {
   employees: Profile[];
   salaries: Record<string, Salary>;
   attendanceLogs: AttendanceRecord[];
-  timeOffRequests: TimeOffRecord[];
 
   isPunchedIn: boolean;
   punchInTime: Date | null;
@@ -77,12 +50,6 @@ interface HRMSContextType {
   updateSalary: (userId: string, fixedWage: number, period?: WagePeriod) => void;
   getSalaryBreakdown: (userId: string) => SalaryBreakdown;
 
-  applyForTimeOff: (
-    req: Omit<TimeOffRecord, 'id' | 'created_at' | 'status' | 'employee_name' | 'department'>
-  ) => void;
-  handleTimeOffAction: (id: string, status: 'APPROVED' | 'REJECTED', comment?: string) => void;
-  getUserLeaveBalance: (userId: string) => LeaveBalance;
-
   getUserLiveStatus: (userId: string) => 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
 
   isLoading: boolean;
@@ -96,7 +63,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [employees, setEmployees] = useState<Profile[]>([]);
   const [salaries, setSalaries] = useState<Record<string, Salary>>({});
   const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
-  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRecord[]>([]);
+  // Employee ids with an approved leave_requests row covering today.
+  const [onLeaveToday, setOnLeaveToday] = useState<Set<string>>(new Set());
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -112,15 +80,22 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [profileRes, salaryRes, attendanceRes, timeOffRes] = await Promise.all([
+      const today = todayISO();
+      const [profileRes, salaryRes, attendanceRes, leaveRes] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('salaries').select('*'),
         supabase.from('attendance').select('*').order('date', { ascending: false }),
-        supabase.from('time_off').select('*').order('created_at', { ascending: false }),
+        // leave_requests supersedes time_off (see migration 002). A missing
+        // relation just means that migration has not run yet — degrade quietly.
+        supabase
+          .from('leave_requests')
+          .select('employee_id')
+          .eq('status', 'APPROVED')
+          .lte('from_date', today)
+          .gte('to_date', today),
       ]);
 
-      const firstError =
-        profileRes.error || salaryRes.error || attendanceRes.error || timeOffRes.error;
+      const firstError = profileRes.error || salaryRes.error || attendanceRes.error;
       if (firstError) throw firstError;
 
       const people = (profileRes.data ?? []) as Profile[];
@@ -141,8 +116,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         })
       );
 
-      setTimeOffRequests(
-        ((timeOffRes.data ?? []) as TimeOffRecord[]).map((r) => decorateTimeOff(r, people))
+      setOnLeaveToday(
+        leaveRes.error ? new Set() : new Set((leaveRes.data ?? []).map((r) => r.employee_id as string))
       );
 
       // Restore the signed-in profile across reloads.
@@ -391,72 +366,16 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [salaries]
   );
 
-  const applyForTimeOff = useCallback(
-    (req: Omit<TimeOffRecord, 'id' | 'created_at' | 'status' | 'employee_name' | 'department'>) => {
-      const optimistic: TimeOffRecord = {
-        ...req,
-        id: `local-${Date.now()}`,
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-      };
-      setTimeOffRequests((prev) => [decorateTimeOff(optimistic, employees), ...prev]);
-
-      void safeWrite('time_off', 'insert', {
-        user_id: req.user_id,
-        type: req.type,
-        start_date: req.start_date,
-        end_date: req.end_date,
-        reason: req.reason,
-        document_url: req.document_url,
-        status: 'PENDING',
-      }).then(() => refresh());
-    },
-    [employees, refresh]
-  );
-
-  const handleTimeOffAction = useCallback(
-    (id: string, status: 'APPROVED' | 'REJECTED', comment?: string) => {
-      setTimeOffRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, status, admin_comment: comment || null } : r))
-      );
-      void safeWrite('time_off', 'update', { status, admin_comment: comment || null }, { column: 'id', value: id })
-        .then(() => refresh());
-    },
-    [refresh]
-  );
-
-  const getUserLeaveBalance = useCallback(
-    (userId: string): LeaveBalance => {
-      const approved = timeOffRequests.filter((r) => r.user_id === userId && r.status === 'APPROVED');
-      const used = (type: string) =>
-        approved
-          .filter((r) => r.type === type)
-          .reduce((n, r) => n + (r.days_count || inclusiveDays(r.start_date, r.end_date)), 0);
-
-      return {
-        paid_days: PAID_ENTITLEMENT,
-        paid_used: used('PAID'),
-        sick_days: SICK_ENTITLEMENT,
-        sick_used: used('SICK'),
-        unpaid_used: used('UNPAID'),
-      };
-    },
-    [timeOffRequests]
-  );
-
   const getUserLiveStatus = useCallback(
     (userId: string): 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE' => {
-      const today = todayISO();
-      const onLeave = timeOffRequests.some(
-        (r) => r.user_id === userId && r.status === 'APPROVED' && r.start_date <= today && r.end_date >= today
-      );
-      if (onLeave) return 'LEAVE';
+      if (onLeaveToday.has(userId)) return 'LEAVE';
 
+      const today = todayISO();
       const row = attendanceLogs.find((a) => a.user_id === userId && a.date === today);
       if (row) return row.status === 'LEAVE' ? 'LEAVE' : row.status === 'HALF_DAY' ? 'HALF_DAY' : 'PRESENT';
       return 'ABSENT';
     },
-    [timeOffRequests, attendanceLogs]
+    [onLeaveToday, attendanceLogs]
   );
 
   const value = useMemo<HRMSContextType>(
@@ -470,7 +389,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       employees,
       salaries,
       attendanceLogs,
-      timeOffRequests,
       isPunchedIn,
       punchInTime,
       elapsedSeconds,
@@ -479,9 +397,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateProfile,
       updateSalary,
       getSalaryBreakdown,
-      applyForTimeOff,
-      handleTimeOffAction,
-      getUserLeaveBalance,
       getUserLiveStatus,
       isLoading,
       loadError,
@@ -489,9 +404,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }),
     [
       currentUser, currentRole, setCurrentRole, switchUser, logout, login, employees, salaries,
-      attendanceLogs, timeOffRequests, isPunchedIn, punchInTime, elapsedSeconds, handlePunchToggle,
-      addEmployee, updateProfile, updateSalary, getSalaryBreakdown, applyForTimeOff,
-      handleTimeOffAction, getUserLeaveBalance, getUserLiveStatus, isLoading, loadError, refresh,
+      attendanceLogs, isPunchedIn, punchInTime, elapsedSeconds, handlePunchToggle,
+      addEmployee, updateProfile, updateSalary, getSalaryBreakdown, getUserLiveStatus, isLoading, loadError, refresh,
     ]
   );
 

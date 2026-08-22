@@ -46,3 +46,12 @@ export function useLeaveCatalog(employeeId?: string, year = new Date().getFullYe
 
   return { types, balances, balanceFor, loading, migrationPending, refresh: load };
 }
+
+/** Inclusive day count between two ISO dates. */
+export function countDays(start: string, end: string): number {
+  if (!start || !end) return 0;
+  const a = new Date(start).getTime();
+  const b = new Date(end).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b) || b < a) return 0;
+  return Math.floor((b - a) / 86400000) + 1;
+}

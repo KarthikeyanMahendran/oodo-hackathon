@@ -733,3 +733,13 @@ a.hr-btn-secondary {
   margin-bottom: var(--space-md);
 }
 .hr-checkbox input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }
+
+/* --- Inline stat (icon + number in a table cell) --- */
+.hr-inline-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.hr-inline-stat svg { color: var(--text-subtle); flex-shrink: 0; }

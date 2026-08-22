@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Card, Badge, IconButton, Button, EmptyState } from '@/components/ui';
-import { useHRMS } from '@/lib/context/HRMSContext';
-import type { TimeOffRecord } from '@/lib/types/hrms';
+import { useLeaveRequests } from '@/lib/hooks';
+import type { LeaveRequest } from '@/lib/types/hrms';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MONTH_FMT = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' });
@@ -16,12 +16,13 @@ interface DayCell {
   inMonth: boolean;
   isToday: boolean;
   isWeekend: boolean;
-  leave: TimeOffRecord[];
+  leave: LeaveRequest[];
 }
 
 const iso = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
+// Falls back to a neutral tone for any leave type beyond the seeded three.
 const TONE: Record<string, 'success' | 'info' | 'warning'> = {
   PAID: 'success',
   SICK: 'info',
@@ -29,7 +30,7 @@ const TONE: Record<string, 'success' | 'info' | 'warning'> = {
 };
 
 export function TeamCalendar({ scope }: { scope: 'me' | 'team' }) {
-  const { currentUser, timeOffRequests } = useHRMS();
+  const { all: leaveRequests } = useLeaveRequests(scope === 'team' ? 'all' : 'mine');
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
@@ -37,11 +38,8 @@ export function TeamCalendar({ scope }: { scope: 'me' | 'team' }) {
   const [selected, setSelected] = useState<string | null>(null);
 
   const relevant = useMemo(
-    () =>
-      timeOffRequests.filter(
-        (r) => r.status !== 'REJECTED' && (scope === 'team' || r.user_id === currentUser?.id)
-      ),
-    [timeOffRequests, scope, currentUser?.id]
+    () => leaveRequests.filter((r) => r.status !== 'REJECTED'),
+    [leaveRequests]
   );
 
   const cells = useMemo<DayCell[]>(() => {
@@ -61,7 +59,7 @@ export function TeamCalendar({ scope }: { scope: 'me' | 'team' }) {
         inMonth: date.getMonth() === month,
         isToday: key === todayIso,
         isWeekend: day === 0 || day === 6,
-        leave: relevant.filter((r) => r.start_date <= key && r.end_date >= key),
+        leave: relevant.filter((r) => r.from_date <= key && r.to_date >= key),
       };
     });
   }, [cursor, relevant]);
@@ -130,7 +128,7 @@ export function TeamCalendar({ scope }: { scope: 'me' | 'team' }) {
               <span className="hr-cal-date">{cell.date.getDate()}</span>
               <span className="hr-cal-marks">
                 {cell.leave.slice(0, 3).map((r) => (
-                  <i key={r.id} className={`hr-dot is-${TONE[r.type] ?? 'muted'}`} />
+                  <i key={r.id} className={`hr-dot is-${TONE[r.leave_type_code ?? ''] ?? 'muted'}`} />
                 ))}
                 {cell.leave.length > 3 && <span className="hr-cal-more">+{cell.leave.length - 3}</span>}
               </span>
@@ -149,9 +147,9 @@ export function TeamCalendar({ scope }: { scope: 'me' | 'team' }) {
               <li key={r.id}>
                 <span className="hr-cell-stack">
                   <span className="hr-cell-primary">{r.employee_name}</span>
-                  <span className="hr-cell-secondary">{r.department}</span>
+                  <span className="hr-cell-secondary">{r.department_name}</span>
                 </span>
-                <Badge tone={TONE[r.type] ?? 'muted'}>{r.type}</Badge>
+                <Badge tone={TONE[r.leave_type_code ?? ''] ?? 'muted'}>{r.leave_type_name}</Badge>
                 <Badge tone={r.status === 'APPROVED' ? 'success' : 'warning'}>{r.status}</Badge>
               </li>
             ))}

@@ -6,7 +6,7 @@ import { Users, CalendarOff, Building2, ShieldCheck, Clock, Plus, ArrowRight } f
 import { Card, Button, Table, StatusBadge, type Column } from '@/components/ui';
 import { EmployeeModal } from '@/components/features/employees/EmployeeModal';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { useAttendance, useEmployees } from '@/lib/hooks';
+import { useAttendance, useEmployees, useOrgStructure } from '@/lib/hooks';
 import type { Profile } from '@/lib/types/hrms';
 
 const dateFmt = new Intl.DateTimeFormat('en-IN', {
@@ -47,7 +47,8 @@ function StatTile({ icon, tone, value, label, sub }: TileProps) {
 
 export default function DashboardPage() {
   const { currentUser, currentRole, employees } = useHRMS();
-  const { allEmployees, departments } = useEmployees();
+  const { allEmployees } = useEmployees();
+  const { departments } = useOrgStructure();
   const { summary, teamToday } = useAttendance();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -137,7 +138,7 @@ export default function DashboardPage() {
         <StatTile
           icon={<Building2 size={20} />}
           tone="indigo"
-          value={Math.max(0, departments.length - 1)}
+          value={departments.length}
           label="Departments"
           sub="Across the org"
         />

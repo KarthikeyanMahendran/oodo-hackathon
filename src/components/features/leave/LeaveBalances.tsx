@@ -1,36 +1,30 @@
 'use client';
 
-import { CalendarCheck, HeartPulse, CalendarX } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { StatCard, StatGrid } from '@/components/ui';
-import type { LeaveBalance } from '@/lib/types/hrms';
+import type { LeaveBalanceRow, LeaveType } from '@/lib/types/hrms';
 
-export function LeaveBalances({ balance }: { balance: LeaveBalance }) {
-  const paidLeft = balance.paid_days - balance.paid_used;
-  const sickLeft = balance.sick_days - balance.sick_used;
+/** Renders one tile per active leave type, driven by policy data — not a fixed set. */
+export function LeaveBalances({ types, balanceFor }: { types: LeaveType[]; balanceFor: (leaveTypeId: string) => LeaveBalanceRow | null }) {
+  if (types.length === 0) return null;
 
   return (
     <StatGrid>
-      <StatCard
-        label="Paid Leave"
-        value={`${paidLeft} / ${balance.paid_days}`}
-        change={`${balance.paid_used} day(s) used`}
-        tone={paidLeft > 0 ? 'success' : 'danger'}
-        icon={<CalendarCheck size={44} />}
-      />
-      <StatCard
-        label="Sick Leave"
-        value={`${sickLeft} / ${balance.sick_days}`}
-        change={`${balance.sick_used} day(s) used`}
-        tone={sickLeft > 0 ? 'info' : 'danger'}
-        icon={<HeartPulse size={44} />}
-      />
-      <StatCard
-        label="Unpaid Leave"
-        value={balance.unpaid_used}
-        change="Days taken without pay"
-        tone="warning"
-        icon={<CalendarX size={44} />}
-      />
+      {types.map((t) => {
+        const bal = balanceFor(t.id);
+        const remaining = bal ? Number(bal.balance) : 0;
+        const total = bal ? Number(bal.allocated_days) + Number(bal.carried_forward) : t.days_allowed_per_year;
+        return (
+          <StatCard
+            key={t.id}
+            label={t.name}
+            value={t.is_paid ? `${remaining} / ${total}` : (bal ? Number(bal.taken_days) : 0)}
+            change={t.is_paid ? `${bal ? Number(bal.taken_days) : 0} day(s) used` : 'Days taken without pay'}
+            tone={!t.is_paid ? 'warning' : remaining > 0 ? 'success' : 'danger'}
+            icon={<CalendarDays size={44} />}
+          />
+        );
+      })}
     </StatGrid>
   );
 }

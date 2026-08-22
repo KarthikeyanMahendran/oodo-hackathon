@@ -18,7 +18,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { useApprovals } from '@/lib/hooks';
+import { useLeaveRequests } from '@/lib/hooks';
 
 interface NavItem {
   href: string;
@@ -36,7 +36,7 @@ interface NavSection {
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { currentRole } = useHRMS();
-  const { pendingCount } = useApprovals();
+  const { pendingCount } = useLeaveRequests('all');
   const isAdmin = currentRole === 'ADMIN';
 
   const sections: NavSection[] = [

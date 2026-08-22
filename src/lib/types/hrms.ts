@@ -80,6 +80,7 @@ export interface AttendanceRecord {
   break_time_mins?: number;
 }
 
+/** Shape of the legacy `time_off` table. Superseded by LeaveRequest (migration 002). */
 export interface TimeOffRecord {
   id: string;
   user_id: string;
@@ -96,6 +97,7 @@ export interface TimeOffRecord {
   created_at: string;
 }
 
+/** Legacy fixed-type balance shape. Superseded by LeaveBalanceRow (migration 002). */
 export interface LeaveBalance {
   paid_days: number; // 24 days per Excalidraw / Dayflow
   paid_used: number;

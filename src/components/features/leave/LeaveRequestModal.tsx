@@ -5,7 +5,7 @@ import { Modal, Button, Select, Input, Textarea, FieldRow, useToast } from '@/co
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useLeaveCatalog } from '@/lib/hooks';
 import { createLeaveRequest } from '@/lib/supabase/org';
-import { countDays } from '@/lib/hooks/useLeave';
+import { countDays } from '@/lib/hooks/useLeaveCatalog';
 
 export function LeaveRequestModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { currentUser, refresh } = useHRMS();
