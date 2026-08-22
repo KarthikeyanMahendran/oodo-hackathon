@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, LogOut, MonitorCheck, User, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, MonitorCheck, User } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useAttendance } from '@/lib/hooks';
 
@@ -69,60 +69,143 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
           <span>{isPunchedIn ? 'Checked in' : 'Checked out'}</span>
         </span>
 
-        {/* User Profile on top right corner */}
-        <div className="relative">
+        {/* Top-Right Circular User Profile Avatar */}
+        <div style={{ position: 'relative', marginLeft: '12px' }}>
           <button
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800/80 transition-colors border-none outline-none bg-transparent cursor-pointer text-left ml-2"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              margin: 0,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              outline: 'none',
+            }}
+            aria-label="User profile menu"
           >
-            <div className="relative shrink-0">
-              {userAvatarUrl ? (
-                <img
-                  src={userAvatarUrl}
-                  alt={userDisplayName}
-                  className="w-9 h-9 rounded-full object-cover border border-zinc-200 dark:border-zinc-700 shadow-sm"
-                />
-              ) : (
-                <span className="w-9 h-9 text-xs font-bold bg-amber-500 text-white rounded-full flex items-center justify-center shadow-sm">
-                  {initials}
-                </span>
-              )}
-            </div>
+            {userAvatarUrl ? (
+              <img
+                src={userAvatarUrl}
+                alt={userDisplayName}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '2px solid var(--border, #e4e4e7)',
+                  display: 'block',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              />
+            ) : (
+              <span
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  backgroundColor: '#f59e0b',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                }}
+              >
+                {initials}
+              </span>
+            )}
           </button>
 
-          {/* Profile Dropdown Menu */}
+          {/* Clean Profile Dropdown Menu */}
           {dropdownOpen && (
             <div
-              className="absolute right-0 mt-2 w-48 py-1 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-zinc-200 dark:border-zinc-800 z-50"
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: '200px',
+                backgroundColor: 'var(--surface-raised, #ffffff)',
+                border: '1px solid var(--border, #e4e4e7)',
+                borderRadius: '12px',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
+                zIndex: 9999,
+                overflow: 'hidden',
+              }}
               onMouseLeave={() => setDropdownOpen(false)}
             >
-              <div className="px-3 py-2 border-b border-zinc-100 dark:border-zinc-800">
-                <p className="text-xs font-bold text-zinc-900 dark:text-white truncate">{userDisplayName}</p>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate">{userRoleDisplay}</p>
+              <div
+                style={{
+                  padding: '12px 14px',
+                  borderBottom: '1px solid var(--border, #f4f4f5)',
+                  backgroundColor: 'var(--surface-subtle, #fafafa)',
+                }}
+              >
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text, #18181b)', lineHeight: '1.3' }}>
+                  {userDisplayName}
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-muted, #71717a)', marginTop: '2px' }}>
+                  {userRoleDisplay}
+                </div>
               </div>
 
-              <Link
-                href="/profile"
-                onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-              >
-                <User size={14} />
-                <span>My Profile</span>
-              </Link>
+              <div style={{ padding: '4px' }}>
+                <Link
+                  href="/profile"
+                  onClick={() => setDropdownOpen(false)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: 'var(--text, #27272a)',
+                    borderRadius: '8px',
+                    textDecoration: 'none',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-hover, #f4f4f5)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <User size={15} style={{ color: '#71717a' }} />
+                  <span>My Profile</span>
+                </Link>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setDropdownOpen(false);
-                  logout();
-                  router.push('/sign-in');
-                }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors border-none outline-none bg-transparent cursor-pointer text-left"
-              >
-                <LogOut size={14} />
-                <span>Sign out</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    logout();
+                    router.push('/sign-in');
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: '#dc2626',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <LogOut size={15} style={{ color: '#dc2626' }} />
+                  <span>Sign out</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
