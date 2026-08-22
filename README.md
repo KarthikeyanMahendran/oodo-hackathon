@@ -1,61 +1,116 @@
 # Dayflow HRMS — Human Resource Management System
 
-[![Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014-000000.svg)](https://nextjs.org/)
+[![Next.js 16](https://img.shields.io/badge/Frontend-Next.js%2016-000000.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind%20CSS-38B2AC.svg)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E.svg)](https://supabase.com/)
+[![Supabase](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E.svg)](https://supabase.com/)
 
-**Dayflow HRMS** (*Every workday, perfectly aligned.*) is a modern enterprise Human Resource Management System designed to streamline employee onboarding, live shift punching, profile management, statutory salary calculations, and leave approval workflows in a sleek **Standard Black & White (Monochrome)** design system.
+**Dayflow HRMS** (*Every workday, perfectly aligned.*) is an enterprise-grade Human Resource Management System designed to streamline employee onboarding, live shift punching, statutory salary calculation, instant document e-signatures, expense claims, IT asset management, and leave approval workflows in a modern, high-contrast monochrome design system.
 
 ---
 
-## 📐 System Architecture
+## 📐 System Architecture & Module Flow
 
-The system coordinates role-aware modules, session security middleware, and a real-time state engine connected to Supabase:
+The system orchestrates role-based access control (Admin vs. Employee), session security, server API provisioning, and real-time state synchronization with Supabase PostgreSQL:
 
 ```mermaid
-graph TD
-    A[User Request] --> B[Next.js App Router & Layout]
-    B --> C[middleware.ts Session Guard]
-    C --> D[Role-Based Access Control]
-    D --> E[HRMS Context Store & State Provider]
-    E --> F[Employee Directory & Onboarding]
-    E --> G[Profile & Resume Manager]
-    E --> H[Statutory Salary Calculator & Payslip Generator]
-    E --> I[Attendance Matrix & Shift Tracker]
-    E --> J[Time Off & Leave Approval Queue]
-    F & G & H & I & J --> K[(Supabase PostgreSQL / db_schema)]
+flowchart TD
+    subgraph Client["🖥️ Dayflow Client Application (Next.js App Router)"]
+        UI["🎨 AppShell & Responsive Sidebar Header"]
+        AuthSystem["🔒 Session Guard & Role-Based Access Control"]
+        
+        subgraph CoreModules["⚡ Core HR & Workforce Modules"]
+            EmpModule["👥 Employee Directory & Scoped Roster"]
+            ProfileModule["👤 3-Tab Profile & Resume Manager"]
+            AttendanceModule["⏱️ Live Attendance & Shift Timer"]
+            LeaveModule["📅 Time Off & Leave Approval Queue"]
+            PayrollModule["💰 Statutory Payroll & Payslip Generator"]
+        end
+
+        subgraph AddonModules["🚀 Workspace Add-Ons & Extensions"]
+            ESignModule["✍️ Instant E-Signature Dispatcher & Envelopes"]
+            ExpenseModule["🧾 Expense Claims & Receipt Processing"]
+            AssetModule["💻 IT Assets & Hardware Management"]
+            FeedModule["📢 Notice Board & Company Feed"]
+        end
+    end
+
+    subgraph BackendAPI["⚙️ Next.js Server API Layer"]
+        UserAPI["/api/users/create (Admin User Provisioning)"]
+        ESignAPI["/api/esign/* (Dispatch, Status, Webhook Sync)"]
+        ExpensesAPI["/api/expenses & /api/ocr"]
+    end
+
+    subgraph DataLayer["🗄️ Supabase PostgreSQL Database (db_schema/four.sql)"]
+        ProfilesDB[("public.profiles")]
+        SalariesDB[("public.salaries")]
+        AttendanceDB[("public.attendance")]
+        LeaveDB[("public.leave_requests")]
+        ESignDB[("public.esign_envelopes")]
+        ClaimsDB[("public.claims")]
+        AssetsDB[("public.it_assets")]
+        FeedDB[("public.company_feed")]
+    end
+
+    UI --> AuthSystem
+    AuthSystem --> CoreModules & AddonModules
+    
+    EmpModule --> UserAPI
+    ESignModule --> ESignAPI
+    ExpenseModule --> ExpensesAPI
+    
+    UserAPI & ESignAPI & ExpensesAPI --> DataLayer
+    CoreModules & AddonModules --> DataLayer
+    
+    ProfilesDB --- SalariesDB
+    ProfilesDB --- AttendanceDB
+    ProfilesDB --- LeaveDB
+    ProfilesDB --- ESignDB
+    ProfilesDB --- ClaimsDB
+    ProfilesDB --- AssetsDB
+    ProfilesDB --- FeedDB
 ```
 
 ---
 
-## ✨ Key Features
+## ✨ Core Features & Functionality
 
-### 🏢 Employee Directory & Onboarding
-- **Live Status Badges**: Real-time status indicators (🟢 Present, 🟡 Absent, 🌓 Half-Day, ✈️ On Leave).
-- **Custom Login ID Generator**: Automatically generates unique employee Login IDs (`OIFILASTYYYYSEQ`) upon onboarding.
+### 👥 Employee Directory & Admin Onboarding
+- **Clean Human-Readable URLs**: Navigates profiles seamlessly via employee Login IDs (e.g. `/employees/OIMACH20260003`) with fallback UUID resolution.
+- **Admin User Provisioning**: High-privilege API endpoint (`/api/users/create`) creates `auth.users`, `profiles`, and `salaries` rows in Supabase concurrently.
+- **Automated Login ID Generator**: Formats structured Login IDs (`OI` + Initials + Year + Sequence, e.g. `OISAJE20260001`).
+- **Live Status Badges**: Displays real-time presence indicators (🟢 Present, 🟡 Absent, 🌓 Half-Day, ✈️ On Leave).
 - **Search & Filters**: Instant search by name, Login ID, or email with department filtering.
 
 ### 👤 Profile & Resume Management
-- **3-Tab Profile View**:
-  - **Resume Tab**: Bio, "What I love about my job", hobbies, skills, and certifications.
-  - **Private Info Tab**: Residing address, personal email, nationality, DOB, marital status, PAN No, UAN No, and bank details.
-  - **Salary Info Tab**: Admin-only statutory breakdown and payslip generator.
+- **General Tab**: Bio, work responsibilities, hobbies, skills, certifications, department, position, and manager structure.
+- **Private Info Tab**: PAN Number, UAN Number, Date of Birth, Marital Status, residing address, and bank details.
+- **Salary Info Tab**: Admin-restricted statutory salary breakdown with one-click printable payslip modal generation.
+
+### ⏱️ Attendance & Live Shift Tracking
+- **Live Shift Timer**: Header check in / check out pill with live elapsed counter and notes logging.
+- **Shift Matrix**: Daily organizational view for HR with date selectors and workforce status tallies.
+- **Half-Day & Break Tracking**: Supports half-day shift logging and break time records.
 
 ### 💰 Statutory Salary Engine & Payslip Generator
-- **Flexible Wage Input**: Switch between Monthly Wage and Annual CTC.
-- **Automated Components**: Auto-calculates Basic (50%), HRA (50% of Basic), Standard Allowance (8.33%), Performance Bonus (8.33% of Basic), LTA (8.333% of Basic), Fixed Allowance, PF (12%), and Professional Tax (₹200).
-- **Official Payslip Report**: One-click printable payslip report modal.
+- **Flexible Wage Inputs**: Toggle between Monthly Wage and Annual CTC.
+- **Automated Statutory Calculation**: Auto-calculates Basic (50%), HRA (25%), Standard Allowance (15%), PF (5%), and Professional Tax (5%).
+- **Printable Payslip Modal**: Generate and print official payslips directly from the browser.
 
-### ⏱️ Attendance & Shift Tracking
-- **Live Shift Widget**: Check In / Check Out with real-time shift timer and notes.
-- **Shift Matrix**: Daily organizational view for HR with date selector and presence summary.
-- **Half-Day Tracking**: Supports half-day shift logging and break time tracking.
+### ✍️ E-Signature Module (DocuSeal Powered)
+- **2-Step Instant Dispatcher**: Upload PDF document $\rightarrow$ configure signer role & drag-and-drop interactive fields (*Signature, Name, Initial, Date*).
+- **Envelope Dashboard**: Track sent documents, view envelope status (*draft, sent, completed, declined*), and download signed PDFs.
+- **Webhook Synchronization**: Webhook endpoint (`/api/esign/webhook`) syncs execution status automatically.
 
-### 📅 Time Off & Leave Management
-- **Leave Balances**: Tracks 24 Days Paid Time Off (PTO) and 7 Days Sick Leave.
-- **Medical Certificate Attachment**: Attach medical certificates and supporting proofs to requests.
-- **HR Approval Queue**: Inline Approve and Reject controls with response comment logging.
+### 🧾 Expenses & Reimbursements
+- **Expense Claim Submission**: Submit reimbursement claims with file receipts, categories, and amounts.
+- **Approval Workflow**: Admin approval & rejection management with comment tracking.
+
+### 💻 IT Assets Management
+- **Hardware Roster**: Track company-owned laptops, monitors, accessories, serial numbers, and assignment statuses.
+
+### 📢 Notice Board & Feed
+- **Company Announcements**: Post organization-wide notices and keep team members updated.
 
 ---
 
@@ -63,10 +118,32 @@ graph TD
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Lucide Icons |
-| **Authentication & Middleware** | Next.js Middleware, Cookie-based Session Guard |
-| **Database** | Supabase PostgreSQL (`db_schema/schema.sql`) |
-| **State Management** | React Context API with LocalStorage fallback resilience |
+| **Framework** | Next.js 16 (App Router), React 19, TypeScript |
+| **Styling** | Vanilla CSS Design System, Tailwind CSS, Lucide Icons |
+| **Database** | Supabase PostgreSQL (`db_schema/four.sql`) |
+| **Authentication** | Custom Session Management & Supabase Auth Integration |
+| **E-Sign Provider** | DocuSeal API Integration |
+
+---
+
+## 🗄️ Database Setup (`db_schema/four.sql`)
+
+The database schema is consolidated in [`db_schema/four.sql`](file:///home/adi/Desktop/Hackathons/hrms/db_schema/four.sql).
+
+### Key Tables
+1. `profiles`: Employee directory, login ID, role, personal info, active status.
+2. `salaries`: Salary breakdown (fixed wage, basic, HRA, allowance, PF, tax).
+3. `attendance`: Check-in/check-out timestamps, date, elapsed seconds.
+4. `leave_requests`: Paid time-off & sick leave requests with approval status.
+5. `esign_envelopes`: E-signature envelope tracker with JSONB field coordinates.
+6. `claims`: Expense reimbursement records.
+7. `it_assets`: Company asset allocation.
+8. `company_feed`: Internal notice board posts.
+
+### Running SQL Migrations
+1. Open your **Supabase Dashboard** $\rightarrow$ **SQL Editor**.
+2. Copy the contents of [`db_schema/four.sql`](file:///home/adi/Desktop/Hackathons/hrms/db_schema/four.sql).
+3. Paste and click **Run**.
 
 ---
 
@@ -74,17 +151,18 @@ graph TD
 
 ### 1. Clone & Install
 ```bash
-git clone <repository-url>
+git clone https://github.com/KarthikeyanMahendran/oodo-hackathon.git
 cd hrms
 npm install
 ```
 
-### 2. Environment Setup
-Create a `.env.local` file:
+### 2. Environment Configuration
+Create a `.env.local` file in the project root:
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xczcsqaxgbgwlhzhgldi.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+DOCUSEAL_API_KEY=your_docuseal_api_key
 ```
 
 ### 3. Run Development Server
@@ -97,20 +175,3 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```bash
 npm run build
 ```
-
-## Local setup
-
-```bash
-npm install
-cp .env.example .env.local   # then fill in the Supabase values
-npm run dev
-```
-
-`.env.local` is gitignored — get the development values from the team rather
-than committing them.
-
-### Database
-
-`db_schema/schema.sql` mirrors the live Supabase project. Optional additive
-columns live in `db_schema/migrations/` — the app runs without them and simply
-does not persist those fields (see `src/lib/supabase/write.ts`).
