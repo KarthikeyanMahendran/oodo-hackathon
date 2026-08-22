@@ -97,3 +97,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ```bash
 npm run build
 ```
+
+## Local setup
+
+```bash
+npm install
+cp .env.example .env.local   # then fill in the Supabase values
+npm run dev
+```
+
+`.env.local` is gitignored — get the development values from the team rather
+than committing them.
+
+### Database
+
+`db_schema/schema.sql` mirrors the live Supabase project. Optional additive
+columns live in `db_schema/migrations/` — the app runs without them and simply
+does not persist those fields (see `src/lib/supabase/write.ts`).
