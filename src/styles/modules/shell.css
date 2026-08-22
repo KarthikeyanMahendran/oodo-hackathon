@@ -88,6 +88,11 @@
   font-weight: 500;
   color: var(--gray-600);
   text-decoration: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 .hr-sidenav-item:hover {

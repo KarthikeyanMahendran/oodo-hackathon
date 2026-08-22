@@ -160,3 +160,53 @@ CREATE POLICY "Users can manage own time_off"         ON public.time_off   FOR A
 
 CREATE POLICY "Allow access esign_template_types" ON public.esign_template_types FOR ALL USING (true);
 CREATE POLICY "Allow access esign_envelopes"      ON public.esign_envelopes      FOR ALL USING (true);
+
+-- ---------------------------------------------------------------------------
+-- 8. Add-on Features: claims, it_assets, company_feed
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN CREATE TYPE claim_type   AS ENUM ('EXPENSE', 'MEDICAL');             EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE claim_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE asset_status AS ENUM ('AVAILABLE', 'ASSIGNED', 'RECOVERED', 'UNDER_REPAIR'); EXCEPTION WHEN duplicate_object THEN null; END $$;
+DO $$ BEGIN CREATE TYPE post_type    AS ENUM ('ANNOUNCEMENT', 'QUESTION');       EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+CREATE TABLE IF NOT EXISTS public.claims (
+    id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id              UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    type                 claim_type NOT NULL,
+    amount               DECIMAL(10, 2),
+    merchant_or_provider VARCHAR(255),
+    event_date           DATE,
+    description          TEXT,
+    document_url         TEXT NOT NULL,
+    status               claim_status DEFAULT 'PENDING',
+    admin_comment        TEXT,
+    created_at           TIMESTAMPTZ DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.it_assets (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    asset_name    VARCHAR(255) NOT NULL,
+    serial_number VARCHAR(255) UNIQUE NOT NULL,
+    status        asset_status DEFAULT 'AVAILABLE',
+    assigned_to   UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    assigned_date TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.company_feed (
+    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    post_type  post_type NOT NULL,
+    content    TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.claims       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.it_assets    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.company_feed ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow access claims"       ON public.claims       FOR ALL USING (true);
+CREATE POLICY "Allow access it_assets"    ON public.it_assets    FOR ALL USING (true);
+CREATE POLICY "Allow access company_feed" ON public.company_feed FOR ALL USING (true);

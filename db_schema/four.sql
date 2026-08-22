@@ -1,0 +1,169 @@
+-- ==========================================
+-- 1. ENUM DEFINITIONS
+-- ==========================================
+CREATE TYPE user_role AS ENUM ('ADMIN', 'EMPLOYEE');
+CREATE TYPE attendance_status AS ENUM ('PRESENT', 'ABSENT', 'LEAVE');
+CREATE TYPE leave_type AS ENUM ('PAID', 'SICK', 'UNPAID');
+CREATE TYPE leave_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+CREATE TYPE claim_type AS ENUM ('EXPENSE', 'MEDICAL');
+CREATE TYPE claim_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+CREATE TYPE asset_status AS ENUM ('AVAILABLE', 'ASSIGNED', 'RECOVERED', 'UNDER_REPAIR');
+CREATE TYPE post_type AS ENUM ('ANNOUNCEMENT', 'QUESTION');
+
+-- ==========================================
+-- 2. CORE MVP TABLES
+-- ==========================================
+CREATE TABLE profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    login_id VARCHAR UNIQUE NOT NULL,
+    role user_role DEFAULT 'EMPLOYEE',
+    first_name VARCHAR NOT NULL,
+    last_name VARCHAR NOT NULL,
+    department VARCHAR,
+    manager_id UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    avatar_url TEXT,
+    must_change_password BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE salaries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE UNIQUE,
+    fixed_wage DECIMAL(12, 2) DEFAULT 0.00,
+    basic_salary DECIMAL(12, 2) DEFAULT 0.00,
+    hra DECIMAL(12, 2) DEFAULT 0.00,
+    standard_allowance DECIMAL(12, 2) DEFAULT 0.00,
+    pf DECIMAL(12, 2) DEFAULT 0.00,
+    tax DECIMAL(12, 2) DEFAULT 0.00,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE attendance (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    check_in TIMESTAMPTZ NOT NULL,
+    check_out TIMESTAMPTZ,
+    status attendance_status DEFAULT 'PRESENT',
+    UNIQUE(user_id, date)
+);
+
+CREATE TABLE time_off (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    type leave_type NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    document_url TEXT,
+    status leave_status DEFAULT 'PENDING',
+    admin_comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- 3. E-SIGNATURE TABLES
+-- ==========================================
+CREATE TABLE esign_template_types (
+    template_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_name VARCHAR NOT NULL,
+    signer_config JSONB,
+    document_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE esign_envelopes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    template_id UUID REFERENCES esign_template_types(template_id) ON DELETE SET NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    docuseal_submission_id VARCHAR NOT NULL UNIQUE,
+    document_name VARCHAR NOT NULL,
+    status VARCHAR DEFAULT 'Pending',
+    signed_document_url TEXT,
+    signed_on TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- 4. NEW ADD-ON FEATURES (CLAIMS, ASSETS, FEED)
+-- ==========================================
+CREATE TABLE claims (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    type claim_type NOT NULL,
+    amount DECIMAL(10, 2),
+    merchant_or_provider VARCHAR,
+    event_date DATE,
+    description TEXT,
+    document_url TEXT NOT NULL,
+    status claim_status DEFAULT 'PENDING',
+    admin_comment TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE it_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    asset_name VARCHAR NOT NULL,
+    serial_number VARCHAR UNIQUE NOT NULL,
+    status asset_status DEFAULT 'AVAILABLE',
+    assigned_to UUID REFERENCES profiles(id) ON DELETE SET NULL,
+    assigned_date TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE company_feed (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    post_type post_type NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- ==========================================
+-- 5. ROW LEVEL SECURITY (RLS) & POLICIES
+-- ==========================================
+CREATE OR REPLACE FUNCTION is_admin() RETURNS BOOLEAN AS $$
+  SELECT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'ADMIN');
+$$ LANGUAGE sql SECURITY DEFINER;
+
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE salaries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_off ENABLE ROW LEVEL SECURITY;
+ALTER TABLE esign_template_types ENABLE ROW LEVEL SECURITY;
+ALTER TABLE esign_envelopes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
+ALTER TABLE it_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE company_feed ENABLE ROW LEVEL SECURITY;
+
+-- Core Policies
+CREATE POLICY "Users view/update own profile" ON profiles FOR ALL USING (auth.uid() = id);
+CREATE POLICY "Admins full access profiles" ON profiles FOR ALL USING (is_admin());
+
+CREATE POLICY "Users view own salary" ON salaries FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins full access salaries" ON salaries FOR ALL USING (is_admin());
+
+CREATE POLICY "Users manage own attendance" ON attendance FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Admins full access attendance" ON attendance FOR ALL USING (is_admin());
+
+CREATE POLICY "Users manage own time_off" ON time_off FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Admins full access time_off" ON time_off FOR ALL USING (is_admin());
+
+-- E-Sign Policies
+CREATE POLICY "Everyone views templates" ON esign_template_types FOR SELECT USING (true);
+CREATE POLICY "Admins manage templates" ON esign_template_types FOR ALL USING (is_admin());
+
+CREATE POLICY "Users view own envelopes" ON esign_envelopes FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins manage envelopes" ON esign_envelopes FOR ALL USING (is_admin());
+
+-- Add-On Policies
+CREATE POLICY "Users manage own claims" ON claims FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Admins full access claims" ON claims FOR ALL USING (is_admin());
+
+CREATE POLICY "Users view own assigned assets" ON it_assets FOR SELECT USING (auth.uid() = assigned_to);
+CREATE POLICY "Admins full access assets" ON it_assets FOR ALL USING (is_admin());
+
+CREATE POLICY "Everyone can read feed" ON company_feed FOR SELECT USING (true);
+CREATE POLICY "Users create posts" ON company_feed FOR INSERT WITH CHECK (auth.uid() = author_id);
+CREATE POLICY "Admins manage all posts" ON company_feed FOR ALL USING (is_admin());

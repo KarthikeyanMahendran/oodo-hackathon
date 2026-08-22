@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn, ShieldCheck, User, KeyRound, X, ShieldAlert } from 'lucide-react';
+import { LogIn, ShieldCheck, User, KeyRound } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Modal } from '@/components/ui';
 
 const DEMO_ACCOUNTS = [
   { loginId: 'OISAJE20260001', role: 'HR Admin', name: 'Sarah Jenkins', icon: ShieldCheck },
@@ -103,7 +103,7 @@ export default function SignInPage() {
           />
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label className="text-xs font-semibold text-zinc-300">Password</label>
+              <label className="hr-form-label">Password *</label>
               <button
                 type="button"
                 onClick={() => {
@@ -112,13 +112,14 @@ export default function SignInPage() {
                   setOtpError('');
                   setIsOtpModalOpen(true);
                 }}
-                className="text-[11px] font-bold text-zinc-400 hover:text-white underline underline-offset-2"
+                className="text-[12px] font-medium text-muted hover:text-primary underline cursor-pointer"
               >
                 Forgot Password / OTP Reset?
               </button>
             </div>
-            <Input
+            <input
               type="password"
+              className="hr-input"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -158,124 +159,70 @@ export default function SignInPage() {
       </div>
 
       {/* Forgot Password OTP Modal */}
-      {isOtpModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
-            <button
-              onClick={() => setIsOtpModalOpen(false)}
-              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-900"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      <Modal
+        isOpen={isOtpModalOpen}
+        onClose={() => setIsOtpModalOpen(false)}
+        title="Reset Password via OTP"
+        subtitle="Verify identity and change initial default password"
+        size="md"
+      >
+        {otpError && <div className="hr-alert hr-alert-danger mb-4">{otpError}</div>}
 
-            <div className="flex items-center space-x-3 mb-5">
-              <div className="p-2.5 rounded-2xl bg-white text-black font-bold">
-                <KeyRound className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white">Reset Password via OTP</h3>
-                <p className="text-xs text-zinc-400">
-                  Verify identity and change initial default password
-                </p>
-              </div>
+        {!otpSent ? (
+          <form onSubmit={handleSendOtp} className="hr-auth-form">
+            <Input
+              label="Enter Login ID or Email"
+              required
+              value={resetQuery}
+              onChange={(e) => setResetQuery(e.target.value)}
+              placeholder="e.g. OISAJE20260001 or sarah.jenkins@acme.com"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setIsOtpModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary">
+                Send OTP Verification
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyAndReset} className="hr-auth-form">
+            <div className="hr-alert hr-alert-info">
+              <strong>Verification Code Dispatched!</strong>
+              <div>{otpSuccessMsg}</div>
             </div>
 
-            {otpError && (
-              <div className="mb-4 p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white flex items-center space-x-2">
-                <ShieldAlert className="w-4 h-4 text-white shrink-0" />
-                <span>{otpError}</span>
-              </div>
-            )}
+            <Input
+              label="Enter 6-Digit OTP Code"
+              required
+              maxLength={6}
+              value={inputOtp}
+              onChange={(e) => setInputOtp(e.target.value)}
+              placeholder="e.g. 849201"
+            />
 
-            {!otpSent ? (
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-300 mb-1">
-                    Enter Login ID or Email *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={resetQuery}
-                    onChange={(e) => setResetQuery(e.target.value)}
-                    placeholder="e.g. OISAJE20260001 or sarah.jenkins@acme.com"
-                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-white font-mono"
-                  />
-                </div>
+            <Input
+              label="New Password"
+              type="password"
+              required
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password (min 6 chars)"
+            />
 
-                <div className="flex justify-end space-x-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsOtpModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-bold hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow"
-                  >
-                    Send OTP Verification
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyAndReset} className="space-y-4">
-                <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
-                  <span className="font-bold text-white block mb-0.5">Verification Code Dispatched!</span>
-                  <span>{otpSuccessMsg}</span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-300 mb-1">
-                    Enter 6-Digit OTP Code *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={inputOtp}
-                    onChange={(e) => setInputOtp(e.target.value)}
-                    placeholder="e.g. 849201"
-                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-sm text-center text-white tracking-widest font-mono focus:outline-none focus:border-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-zinc-300 mb-1">
-                    New Password *
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter new password (min 6 chars)"
-                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-white font-mono"
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setOtpSent(false)}
-                    className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-bold hover:bg-zinc-800"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow"
-                  >
-                    Verify OTP & Reset Password
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setOtpSent(false)}>
+                Back
+              </Button>
+              <Button type="submit" variant="primary">
+                Verify OTP & Reset Password
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 }

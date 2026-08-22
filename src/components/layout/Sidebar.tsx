@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -15,6 +16,14 @@ import {
   ReceiptText,
   CheckSquare,
   Activity,
+  FileSignature,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Send,
+  MessageSquare,
+  Receipt,
+  Monitor,
 } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useApprovals } from '@/lib/hooks';
@@ -38,6 +47,8 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
   const { pendingCount } = useApprovals();
   const isAdmin = currentRole === 'ADMIN';
 
+  const [esignOpen, setEsignOpen] = useState(() => pathname.startsWith('/esign'));
+
   const sections: NavSection[] = [
     { items: [{ href: '/dashboard', label: 'Dashboard', icon: LayoutGrid }] },
     {
@@ -50,17 +61,19 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
       ],
     },
     {
-      label: 'HR',
+      label: 'HR & Workspace',
       items: [
+        { href: '/feed', label: 'Notice Board', icon: MessageSquare },
+        { href: '/expenses', label: 'Expenses', icon: Receipt },
+        { href: '/assets', label: 'IT Assets', icon: Monitor },
         { href: '/profile', label: 'My Profile', icon: UserRoundPen },
         { href: '/attendance', label: 'My Attendance', icon: CalendarCheck },
         { href: '/time-off', label: 'My Leave', icon: CalendarDays },
         { href: '/my-salary', label: 'My Salary', icon: Wallet },
-        { href: '/my-payslips', label: 'My Payslips', icon: ReceiptText },
       ],
     },
     {
-      label: 'Payroll',
+      label: 'Payroll & Approvals',
       items: [
         { href: '/payroll', label: 'Payroll', icon: Wallet, adminOnly: true },
         { href: '/approvals', label: 'Approvals', icon: CheckSquare, adminOnly: true, badge: pendingCount },
@@ -109,6 +122,49 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
             </div>
           );
         })}
+
+        {/* E-Signature Accordion Navigation */}
+        <div className="hr-sidenav-section">
+          <span className="hr-sidenav-label">Documents</span>
+          <button
+            type="button"
+            onClick={() => setEsignOpen((prev) => !prev)}
+            className={`hr-sidenav-item w-full flex items-center justify-between cursor-pointer border-none outline-none bg-transparent ${
+              pathname.startsWith('/esign') ? 'active' : ''
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <FileSignature size={18} strokeWidth={1.9} />
+              <span>E-Signature</span>
+            </div>
+            {esignOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+          </button>
+
+          {esignOpen && (
+            <div className="pl-4 space-y-1 mt-1 border-l border-zinc-800 ml-3">
+              <Link
+                href="/esign/templates"
+                onClick={onNavigate}
+                className={`hr-sidenav-item !py-1.5 !text-xs ${
+                  pathname.startsWith('/esign/templates') ? 'active' : ''
+                }`}
+              >
+                <FileText size={15} />
+                <span>Templates</span>
+              </Link>
+              <Link
+                href="/esign/envelopes"
+                onClick={onNavigate}
+                className={`hr-sidenav-item !py-1.5 !text-xs ${
+                  pathname.startsWith('/esign/envelopes') ? 'active' : ''
+                }`}
+              >
+                <Send size={15} />
+                <span>Sent Documents</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </nav>
     </aside>
   );
