@@ -3,19 +3,13 @@
 import { useState } from 'react';
 import { Copy, Check, KeyRound } from 'lucide-react';
 import { Modal, Button, Input, Select, FieldRow, useToast } from '@/components/ui';
-import { useEmployeeForm } from '@/lib/hooks';
-
-const DEPARTMENTS = [
-  'Engineering',
-  'Product & Design',
-  'Sales & Marketing',
-  'People Operations',
-  'Finance',
-  'Executive Administration',
-];
+import { useEmployeeForm, useOrgStructure } from '@/lib/hooks';
 
 export function EmployeeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const { draft, setField, errors, credential, saving, submit, reset } = useEmployeeForm();
+  const { departments, scopedDesignations, migrationPending, loading: orgLoading } = useOrgStructure(
+    draft.department_id
+  );
   const showToast = useToast();
   const [copied, setCopied] = useState(false);
 
@@ -26,7 +20,11 @@ export function EmployeeModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
   };
 
   const handleSubmit = () => {
-    if (submit()) showToast('Employee created. Share the credentials below.', 'success');
+    const ok = submit({
+      department: departments.find((d) => d.id === draft.department_id)?.name,
+      designation: scopedDesignations.find((d) => d.id === draft.designation_id)?.name,
+    });
+    if (ok) showToast('Employee created. Share the credentials below.', 'success');
   };
 
   const copyCredentials = async () => {
@@ -128,24 +126,57 @@ export function EmployeeModal({ isOpen, onClose }: { isOpen: boolean; onClose: (
             />
           </FieldRow>
 
+          {migrationPending && (
+            <div className="hr-alert hr-alert-warning">
+              Departments and designations are unavailable until
+              <strong> db_schema/migrations/002_org_structure_and_leave.sql </strong>
+              has been run.
+            </div>
+          )}
+
           <FieldRow>
             <Select
               label="Department"
-              value={draft.department}
-              onChange={(e) => setField('department', e.target.value)}
+              value={draft.department_id}
+              onChange={(e) => setField('department_id', e.target.value)}
+              error={errors.department_id}
+              disabled={orgLoading || migrationPending}
+              required
             >
-              {DEPARTMENTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
+              <option value="">
+                {orgLoading ? 'Loading…' : 'Select a department'}
+              </option>
+              {departments.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
                 </option>
               ))}
             </Select>
-            <Input
-              label="Job position"
-              value={draft.job_position}
-              onChange={(e) => setField('job_position', e.target.value)}
-              placeholder="Software Engineer"
-            />
+
+            <Select
+              label="Designation"
+              value={draft.designation_id}
+              onChange={(e) => setField('designation_id', e.target.value)}
+              error={errors.designation_id}
+              disabled={!draft.department_id || migrationPending}
+              hint={
+                !draft.department_id
+                  ? 'Choose a department first'
+                  : scopedDesignations.length === 0
+                    ? 'No designations defined for this department'
+                    : undefined
+              }
+              required
+            >
+              <option value="">
+                {draft.department_id ? 'Select a designation' : '—'}
+              </option>
+              {scopedDesignations.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </Select>
           </FieldRow>
 
           <Input

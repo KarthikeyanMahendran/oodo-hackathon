@@ -1,5 +1,11 @@
 -- Supabase schema for the HRMS application.
--- Mirrors the live project (xczcsqaxgbgwlhzhgldi) as of 2026-08-22.
+-- Mirrors the live project as of 2026-08-22.
+--
+-- Migrations in db_schema/migrations/ extend this baseline:
+--   001 — optional columns (leave reason, attendance notes, statutory ids)
+--   002 — departments, designations, leave_types, leave_balances,
+--         leave_requests, plus views and indexes. Run 002 to enable the
+--         department/designation dropdowns and the normalised leave flow.
 
 -- ---------------------------------------------------------------------------
 -- 1. Enums

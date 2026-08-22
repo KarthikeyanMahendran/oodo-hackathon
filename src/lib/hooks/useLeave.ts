@@ -2,10 +2,10 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useHRMS } from '../context/HRMSContext';
-import type { LeaveStatus, LeaveType, TimeOffRecord } from '../types/hrms';
+import type { LeaveStatus, LeaveTypeCode, TimeOffRecord } from '../types/hrms';
 
 export interface LeaveDraft {
-  type: LeaveType;
+  type: LeaveTypeCode;
   start_date: string;
   end_date: string;
   reason: string;

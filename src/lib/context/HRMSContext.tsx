@@ -363,6 +363,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone: profile.phone,
         department: profile.department,
         job_position: profile.job_position,
+        department_id: profile.department_id,
+        designation_id: profile.designation_id,
         avatar_url: profile.avatar_url,
       }).then(() => refresh());
 

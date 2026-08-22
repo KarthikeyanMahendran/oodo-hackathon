@@ -7,3 +7,5 @@ export { useAttendance, formatDuration } from './useAttendance';
 export { useEmployees } from './useEmployees';
 export { useEmployeeForm, validateEmployee } from './useEmployeeForm';
 export type { EmployeeDraft, CreatedCredential } from './useEmployeeForm';
+export { useOrgStructure } from './useOrgStructure';
+export { useLeaveCatalog } from './useLeaveCatalog';

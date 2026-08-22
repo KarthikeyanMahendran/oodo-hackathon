@@ -721,3 +721,15 @@ a.hr-btn-secondary {
   .hr-cal-cell { min-height: 58px; padding: 5px; }
   .hr-cal-legend { gap: var(--space-md); }
 }
+
+/* --- Checkbox --- */
+.hr-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: var(--space-md);
+}
+.hr-checkbox input { width: 15px; height: 15px; accent-color: var(--primary); cursor: pointer; }

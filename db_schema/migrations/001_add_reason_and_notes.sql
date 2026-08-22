@@ -1,4 +1,6 @@
--- Adds the columns the application writes but the live schema lacks.
+-- APPLIED to the live database on 2026-08-22.
+--
+-- Adds the columns the application writes but the baseline schema lacks.
 -- All are additive and nullable, so running this is non-destructive.
 --
 -- Until it is applied the app still works: src/lib/supabase/write.ts detects
