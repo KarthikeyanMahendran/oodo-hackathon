@@ -84,8 +84,13 @@ export default function EmployeeProfilePage() {
   const { departments, scopedDesignations, departmentName, designationName } = useOrgStructure();
   const showToast = useToast();
 
-  const employeeId = (params?.id as string) || currentUser?.id || '';
-  const employee = employees.find((e) => e.id === employeeId);
+  const paramKey = (params?.id as string) || currentUser?.id || '';
+  const employee = employees.find(
+    (e) =>
+      e.id === paramKey ||
+      (e.login_id && e.login_id.toLowerCase() === paramKey.toLowerCase()) ||
+      (e.email && e.email.toLowerCase() === paramKey.toLowerCase())
+  );
 
   const [activeTab, setActiveTab] = useState('general');
   const [editing, setEditing] = useState(false);

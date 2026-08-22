@@ -44,7 +44,7 @@ export function GroupDirectory({
       render: (row) => (
         <div className="hr-member-chips">
           {row.members.slice(0, 4).map((m) => (
-            <Link key={m.id} href={`/employees/${m.id}`} className="hr-avatar hr-avatar-sm" title={`${m.first_name} ${m.last_name}`}>
+            <Link key={m.id} href={`/employees/${m.login_id || m.id}`} className="hr-avatar hr-avatar-sm" title={`${m.first_name} ${m.last_name}`}>
               {`${m.first_name?.[0] ?? ''}${m.last_name?.[0] ?? ''}`.toUpperCase()}
             </Link>
           ))}
