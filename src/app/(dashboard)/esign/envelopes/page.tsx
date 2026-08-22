@@ -9,6 +9,7 @@ import {
   Eye,
   Download,
   FileCheck,
+  Send,
 } from 'lucide-react';
 import {
   PageHeader,
@@ -19,93 +20,81 @@ import {
   Input,
   Select,
   Badge,
-  statusTone,
   EmptyState,
   type Column,
 } from '@/components/ui';
 
 interface Envelope {
   id: string;
-  template_id: string;
-  docuseal_submission_id: string;
   document_name: string;
+  document_url: string;
+  signer_name: string;
+  signer_email: string;
+  signer_role: string;
   status: string;
   signed_document_url?: string;
   signed_on?: string;
   created_at: string;
-  template_used?: string;
-  signers_str?: string;
 }
 
 const DUMMY_ENVELOPES: Envelope[] = [
   {
     id: 'env-101',
-    template_id: 'tpl-001',
-    docuseal_submission_id: '10366950',
     document_name: 'DS2019Agreement135.pdf',
-    template_used: 'Integration DS2019',
-    signers_str: 'Jiffy Admin',
+    document_url: '#',
+    signer_name: 'Jiffy Admin',
+    signer_email: 'jiffy@company.com',
+    signer_role: 'HR Admin',
     status: 'Signed',
     created_at: '2026-08-20T08:49:17Z',
     signed_on: '2026-08-20T08:49:17Z',
   },
   {
     id: 'env-102',
-    template_id: 'tpl-001',
-    docuseal_submission_id: '10366951',
     document_name: 'DS2019Agreement553.pdf',
-    template_used: 'Integration DS2019',
-    signers_str: 'Jiffy Admin',
+    document_url: '#',
+    signer_name: 'Jiffy Admin',
+    signer_email: 'jiffy@company.com',
+    signer_role: 'HR Admin',
     status: 'Signed',
     created_at: '2026-08-19T10:15:00Z',
     signed_on: '2026-08-19T10:15:00Z',
   },
   {
     id: 'env-103',
-    template_id: 'tpl-002',
-    docuseal_submission_id: '10366952',
-    document_name: 'test test test',
-    template_used: 'Workspace checking',
-    signers_str: 'Backslash Board',
+    document_name: 'Offer Letter - Sunny Deol',
+    document_url: '#',
+    signer_name: 'Sunny Deol',
+    signer_email: 'sunny@company.com',
+    signer_role: 'Employee / Participant',
     status: 'Signed',
     created_at: '2026-08-14T14:20:00Z',
     signed_on: '2026-08-14T14:20:00Z',
   },
   {
     id: 'env-104',
-    template_id: 'tpl-003',
-    docuseal_submission_id: '10366953',
-    document_name: 'Offer Letter - Sunny Deol',
-    template_used: '-',
-    signers_str: 'Sunny Deol',
-    status: 'Signed',
-    created_at: '2026-08-12T11:00:00Z',
-    signed_on: '2026-08-12T11:00:00Z',
-  },
-  {
-    id: 'env-105',
-    template_id: 'tpl-001',
-    docuseal_submission_id: '10366954',
-    document_name: 'DS2019Agreement109.pdf',
-    template_used: 'Integration DS2019',
-    signers_str: 'Jiffy Admin',
+    document_name: 'NDA - Cloud Architecture Team',
+    document_url: '#',
+    signer_name: 'Backslash Board',
+    signer_email: 'backslash@company.com',
+    signer_role: 'Department Manager',
     status: 'Yet to sign',
     created_at: '2026-08-11T09:30:00Z',
   },
   {
-    id: 'env-106',
-    template_id: 'tpl-001',
-    docuseal_submission_id: '10366955',
-    document_name: 'DS2019Agreement017.pdf',
-    template_used: 'Integration DS2019',
-    signers_str: 'Jiffy Admin',
+    id: 'env-105',
+    document_name: 'Employment Contract - Rajesh K',
+    document_url: '#',
+    signer_name: 'Rajesh Kumar',
+    signer_email: 'rajesh@company.com',
+    signer_role: 'Employee / Participant',
     status: 'Signed',
     created_at: '2026-08-11T08:00:00Z',
     signed_on: '2026-08-11T08:00:00Z',
   },
 ];
 
-export default function SentDocumentsPage() {
+export default function ESignMainPage() {
   const router = useRouter();
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +123,9 @@ export default function SentDocumentsPage() {
   }, []);
 
   const filteredEnvelopes = envelopes.filter((e) => {
-    const matchesSearch = e.document_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      e.document_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.signer_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === 'ALL' || e.status.toLowerCase().includes(statusFilter.toLowerCase());
     return matchesSearch && matchesStatus;
@@ -145,7 +136,7 @@ export default function SentDocumentsPage() {
       header: 'Document Name',
       render: (row) => (
         <div className="flex items-center gap-2.5">
-          <span className="hr-avatar hr-avatar-sm !bg-zinc-100 !text-zinc-700">
+          <span className="hr-avatar hr-avatar-sm !bg-zinc-100 !text-zinc-700 dark:!bg-zinc-800 dark:!text-zinc-300">
             <FileText size={14} />
           </span>
           <span className="hr-cell-primary">{row.document_name}</span>
@@ -153,12 +144,17 @@ export default function SentDocumentsPage() {
       ),
     },
     {
-      header: 'Template Used',
-      render: (row) => <span className="hr-cell-secondary">{row.template_used || 'Integration DS2019'}</span>,
+      header: 'Signer',
+      render: (row) => (
+        <div>
+          <div className="text-xs font-semibold text-zinc-900 dark:text-white">{row.signer_name}</div>
+          <div className="text-[11px] text-muted font-mono">{row.signer_email}</div>
+        </div>
+      ),
     },
     {
-      header: 'Signers',
-      render: (row) => <span>{row.signers_str || 'Jiffy Admin'}</span>,
+      header: 'Role',
+      render: (row) => <span className="hr-cell-secondary">{row.signer_role}</span>,
     },
     {
       header: 'Sent On',
@@ -187,7 +183,7 @@ export default function SentDocumentsPage() {
           <button
             type="button"
             onClick={() => setActiveMenuId(activeMenuId === row.id ? null : row.id)}
-            className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+            className="p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 border-none outline-none bg-transparent cursor-pointer"
           >
             <MoreVertical size={16} />
           </button>
@@ -225,16 +221,21 @@ export default function SentDocumentsPage() {
   return (
     <div className="hr-stack">
       <PageHeader
-        title="Sent Documents"
-        subtitle="Track and view real-time signature progress for dispatched documents."
+        title="E-Signature"
+        subtitle="Track and manage all documents sent for electronic signature."
+        actions={
+          <Link href="/esign/dispatch">
+            <Button icon={<Send size={14} />}>Send for E-Sign</Button>
+          </Link>
+        }
       />
 
       <Card>
-        <CardHeader title="Envelope Outbox" subtitle="Monitor completion status and download signed PDFs" />
+        <CardHeader title="Sent Documents" subtitle="Monitor completion status and download signed PDFs" />
 
         <div className="hr-filter-bar">
           <Input
-            placeholder="Search documents by name..."
+            placeholder="Search by document name or signer..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search documents"
@@ -256,7 +257,7 @@ export default function SentDocumentsPage() {
           <EmptyState
             icon={FileText}
             title="No sent documents found"
-            description="Adjust search or status filters to view dispatched envelopes."
+            description="Start by sending a document for e-signature using the button above."
           />
         ) : (
           <Table<Envelope> columns={columns} data={filteredEnvelopes} rowKey={(r) => r.id} />

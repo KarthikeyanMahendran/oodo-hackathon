@@ -2,100 +2,87 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { memoryEnvelopes } from '@/lib/esign/store';
 
-interface Submitter {
-  name: string;
-  email: string;
-  role?: string;
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const {
-      template_id,
-      document_url,
       document_name,
-      submitters = [],
-      send_order = 'parallel',
+      document_url,
+      signer_name,
+      signer_email,
+      signer_role = 'Participant',
+      placed_fields = [],
     } = body;
 
-    if (!document_url && !template_id) {
+    if (!document_name || !signer_name || !signer_email) {
       return NextResponse.json(
-        { success: false, error: 'Either template_id or document_url must be provided' },
+        { success: false, error: 'document_name, signer_name, and signer_email are required' },
         { status: 400 }
       );
     }
 
-    const finalDocumentName = document_name || 'Document Envelope';
-    let docusealSubmissionId = `docuseal_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const docusealSubmissionId = `docuseal_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
-    // Call DocuSeal API if DOCUSEAL_API_KEY is configured
+    // Call DocuSeal API if configured
     const docusealApiKey = process.env.DOCUSEAL_API_KEY;
     const docusealBaseUrl = process.env.DOCUSEAL_URL || 'https://api.docuseal.com';
+    let finalSubmissionId = docusealSubmissionId;
 
     if (docusealApiKey) {
       try {
-        const payload: Record<string, unknown> = {
-          send_order: send_order === 'sequential',
-          submitters: submitters.map((s: Submitter) => ({
-            name: s.name,
-            email: s.email,
-            role: s.role || 'Signer',
-          })),
-        };
-
-        if (template_id) {
-          payload.template_id = template_id;
-        }
-        if (document_url) {
-          payload.documents = [
+        const payload = {
+          submitters: [
             {
-              name: finalDocumentName,
+              name: signer_name,
+              email: signer_email,
+              role: signer_role,
+            },
+          ],
+          documents: [
+            {
+              name: document_name,
               url: document_url,
             },
-          ];
-        }
+          ],
+        };
 
         const docusealRes = await fetch(`${docusealBaseUrl}/submissions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-Auth-Token': docusealApiKey,
-            'Authorization': `Bearer ${docusealApiKey}`,
+            Authorization: `Bearer ${docusealApiKey}`,
           },
           body: JSON.stringify(payload),
         });
 
         if (docusealRes.ok) {
           const docusealData = await docusealRes.json();
-          // DocuSeal returns array of submitters or single submission object
           if (Array.isArray(docusealData) && docusealData.length > 0) {
-            docusealSubmissionId = String(docusealData[0].submission_id || docusealData[0].id);
+            finalSubmissionId = String(docusealData[0].submission_id || docusealData[0].id);
           } else if (docusealData && (docusealData.id || docusealData.submission_id)) {
-            docusealSubmissionId = String(docusealData.id || docusealData.submission_id);
+            finalSubmissionId = String(docusealData.id || docusealData.submission_id);
           }
         }
       } catch (docusealErr) {
-        console.warn('DocuSeal API call failed or in sandbox mode, using generated submission ID:', docusealErr);
+        console.warn('DocuSeal API call failed, using generated submission ID:', docusealErr);
       }
     }
 
     const envelopeId = `env-${crypto.randomUUID()}`;
     const newEnvelopeRecord = {
       id: envelopeId,
-      template_id: template_id || null,
-      docuseal_submission_id: docusealSubmissionId,
-      document_name: finalDocumentName,
+      document_name,
+      document_url: document_url || '',
+      signer_name,
+      signer_email,
+      signer_role,
+      docuseal_submission_id: finalSubmissionId,
       status: 'Pending' as const,
+      placed_fields,
       signed_document_url: null,
       signed_on: null,
       created_at: new Date().toISOString(),
-      submitters: submitters.map((s: Submitter) => ({
-        name: s.name,
-        email: s.email,
-        role: s.role || 'Signer',
-        status: 'pending',
-      })),
     };
 
     // Insert into Supabase DB
@@ -103,12 +90,14 @@ export async function POST(request: Request) {
       .from('esign_envelopes')
       .insert([
         {
-          template_id: template_id || null,
-          docuseal_submission_id: docusealSubmissionId,
-          document_name: finalDocumentName,
+          document_name,
+          document_url: document_url || '',
+          signer_name,
+          signer_email,
+          signer_role,
+          docuseal_submission_id: finalSubmissionId,
           status: 'Pending',
-          signed_document_url: null,
-          signed_on: null,
+          placed_fields,
         },
       ])
       .select('*')
@@ -128,12 +117,12 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       envelope_id: envelopeId,
-      docuseal_submission_id: docusealSubmissionId,
+      docuseal_submission_id: finalSubmissionId,
       envelope: newEnvelopeRecord,
     });
-  } catch (err: unknown) {
+  } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: (err instanceof Error ? err.message : 'Failed to create envelope') },
+      { success: false, error: err.message || 'Failed to create envelope' },
       { status: 500 }
     );
   }

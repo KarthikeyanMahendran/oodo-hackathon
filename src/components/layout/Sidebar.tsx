@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutGrid,
@@ -16,12 +17,7 @@ import {
   Wallet,
   ReceiptText,
   CheckSquare,
-  Activity,
-  FileSignature,
-  ChevronDown,
-  ChevronRight,
-  FileText,
-  Send,
+
   MessageSquare,
   Receipt,
   Monitor,
@@ -48,7 +44,7 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
   const { pendingCount } = useLeaveRequests('all');
   const isAdmin = currentRole === 'ADMIN';
 
-  const [esignOpen, setEsignOpen] = useState(() => pathname.startsWith('/esign'));
+
 
   const sections: NavSection[] = [
     { items: [{ href: '/dashboard', label: 'Dashboard', icon: LayoutGrid }] },
@@ -72,7 +68,6 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
         { href: '/time-off', label: 'My Leave', icon: CalendarDays },
         { href: '/calendar', label: 'Calendar', icon: CalendarRange },
         { href: '/my-salary', label: 'My Salary', icon: Wallet },
-        { href: '/my-payslips', label: 'My Payslips', icon: ReceiptText },
       ],
     },
     {
@@ -89,13 +84,14 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
   return (
     <aside className={`hr-sidebar ${open ? 'is-open' : ''}`.trim()}>
       <Link href="/dashboard" className="hr-brand" onClick={onNavigate}>
-        <span className="hr-brand-mark" aria-hidden>
-          <Activity size={20} strokeWidth={2.5} />
-        </span>
-        <span className="hr-brand-text">
-          <span className="hr-brand-name">Dayflow</span>
-          <span className="hr-brand-sub">People</span>
-        </span>
+        <Image
+          src="/gemini-svg.svg"
+          alt="Dayflow Logo"
+          width={220}
+          height={66}
+          style={{ objectFit: 'contain', height: '54px', width: 'auto', maxWidth: '190px' }}
+          priority
+        />
       </Link>
 
       <nav className="hr-sidenav" aria-label="Main">
@@ -126,42 +122,6 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
           );
         })}
 
-        <div className="hr-sidenav-section">
-          <span className="hr-sidenav-label">Documents</span>
-          <button
-            type="button"
-            onClick={() => setEsignOpen((prev) => !prev)}
-            className={`hr-sidenav-item hr-sidenav-accordion-trigger ${pathname.startsWith('/esign') ? 'active' : ''}`.trim()}
-            aria-expanded={esignOpen}
-          >
-            <FileSignature size={18} strokeWidth={1.9} aria-hidden />
-            <span>E-Signature</span>
-            <span className="hr-sidenav-chevron" aria-hidden>
-              {esignOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
-            </span>
-          </button>
-
-          {esignOpen && (
-            <div className="hr-sidenav-subitems">
-              <Link
-                href="/esign/templates"
-                onClick={onNavigate}
-                className={`hr-sidenav-item hr-sidenav-subitem ${pathname.startsWith('/esign/templates') ? 'active' : ''}`.trim()}
-              >
-                <FileText size={15} aria-hidden />
-                <span>Templates</span>
-              </Link>
-              <Link
-                href="/esign/envelopes"
-                onClick={onNavigate}
-                className={`hr-sidenav-item hr-sidenav-subitem ${pathname.startsWith('/esign/envelopes') ? 'active' : ''}`.trim()}
-              >
-                <Send size={15} aria-hidden />
-                <span>Sent Documents</span>
-              </Link>
-            </div>
-          )}
-        </div>
       </nav>
     </aside>
   );

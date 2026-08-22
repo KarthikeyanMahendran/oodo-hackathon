@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { LogIn, ShieldCheck, User } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
@@ -97,8 +98,16 @@ export default function SignInPage() {
     <div className="hr-auth">
       <div className="hr-auth-card">
         <div className="hr-auth-head">
-          <span className="hr-brand-mark hr-auth-mark" aria-hidden />
-          <h1>Sign in to Dayflow</h1>
+          <div className="mb-2 flex justify-center">
+            <Image
+              src="/gemini-svg.svg"
+              alt="Dayflow Logo"
+              width={220}
+              height={66}
+              style={{ objectFit: 'contain', height: '56px', width: 'auto' }}
+              priority
+            />
+          </div>
           <p className="hr-subtext">Employees, attendance, leave and payroll.</p>
         </div>
 
