@@ -1,15 +1,75 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn, ShieldCheck, User } from 'lucide-react';
+import {
+  Activity,
+  LogIn,
+  ShieldCheck,
+  User,
+  Users,
+  LayoutGrid,
+  CalendarCheck,
+  CalendarDays,
+  CalendarRange,
+  Wallet,
+  ReceiptText,
+  CheckSquare,
+  Building2,
+  Clock,
+} from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { Button, Input, Modal } from '@/components/ui';
+
+/**
+ * Auto-rotating feature panel. Inline lucide icons + CSS transitions only —
+ * no images and no network round-trips, so the panel paints instantly and
+ * adds nothing to the bundle (every icon here is already used elsewhere).
+ */
+const SLIDES = [
+  {
+    title: 'Your whole workforce, at a glance',
+    sub: 'Headcount, departments and who is in today — one dashboard, always current.',
+    Hero: LayoutGrid,
+    side: [Users, Building2, Activity],
+    tone: 'is-blue',
+  },
+  {
+    title: 'Attendance that tracks itself',
+    sub: 'Punch in once and the timer runs live. Every shift lands in the register.',
+    Hero: CalendarCheck,
+    side: [Clock, Users, CalendarRange],
+    tone: 'is-green',
+  },
+  {
+    title: 'Leave requests, approved in a click',
+    sub: 'Balances calculated automatically. Managers approve or reject with a reason.',
+    Hero: CalendarDays,
+    side: [CheckSquare, CalendarRange, Users],
+    tone: 'is-violet',
+  },
+  {
+    title: 'Payroll with the maths already done',
+    sub: 'Basic, HRA, PF and professional tax derived from each wage — payslips included.',
+    Hero: Wallet,
+    side: [ReceiptText, ShieldCheck, Activity],
+    tone: 'is-amber',
+  },
+];
+
+const SLIDE_INTERVAL_MS = 4500;
 
 export default function SignInPage() {
   const router = useRouter();
   const { login, employees, isLoading, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
+
+  const [slide, setSlide] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), SLIDE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
 
   // Sign-in shortcuts are built from the real directory, not a hardcoded list.
   const quickAccounts = employees.slice(0, 2).map((e) => ({
@@ -94,77 +154,137 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="hr-auth">
-      <div className="hr-auth-card">
-        <div className="hr-auth-head">
-          <span className="hr-brand-mark hr-auth-mark" aria-hidden />
-          <h1>Sign in to Dayflow</h1>
-          <p className="hr-subtext">Employees, attendance, leave and payroll.</p>
-        </div>
-
-        {errorMsg && <div className="hr-alert hr-alert-danger">{errorMsg}</div>}
-
-        <form onSubmit={handleSubmit} className="hr-auth-form">
-          <Input
-            label="Login ID or email"
-            value={loginIdOrEmail}
-            onChange={(e) => setLoginIdOrEmail(e.target.value)}
-            placeholder="OISAJE20260001"
-            autoComplete="username"
-            required
-          />
-          <div className="hr-form-group">
-            <div className="hr-form-row-between">
-              <label className="hr-form-label">Password</label>
-              <button type="button" className="hr-link-ghost" onClick={openResetModal}>
-                Forgot password?
-              </button>
+    <div className="hr-login">
+      {/* Left — sign in */}
+      <div className="hr-login-form-pane">
+        <div className="hr-login-form-inner">
+          <div className="hr-login-brand">
+            <span className="hr-login-brand-icon" aria-hidden>
+              <Activity size={20} strokeWidth={2.4} />
+            </span>
+            <div>
+              <h1 className="hr-login-brand-title">Dayflow</h1>
+              <p className="hr-login-brand-sub">People</p>
             </div>
-            <input
-              type="password"
-              className="hr-input"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-            />
           </div>
 
-          <Button type="submit" loading={isSubmitting} icon={<LogIn size={15} />} className="w-full">
-            {isSubmitting ? 'Signing in…' : 'Sign in'}
-          </Button>
-        </form>
+          <div className="hr-login-heading">
+            <h2>Sign in</h2>
+            <p>to access your HR workspace</p>
+          </div>
 
-        {quickAccounts.length > 0 && (
-          <>
-            <div className="hr-auth-divider">
-              <span>Or continue as</span>
+          {errorMsg && <div className="hr-alert hr-alert-danger">{errorMsg}</div>}
+
+          <form onSubmit={handleSubmit} className="hr-auth-form">
+            <Input
+              label="Login ID or email"
+              value={loginIdOrEmail}
+              onChange={(e) => setLoginIdOrEmail(e.target.value)}
+              placeholder="OISAJE20260001"
+              autoComplete="username"
+              required
+            />
+            <div className="hr-form-group">
+              <div className="hr-form-row-between">
+                <label className="hr-form-label">Password</label>
+                <button type="button" className="hr-link-ghost" onClick={openResetModal}>
+                  Forgot password?
+                </button>
+              </div>
+              <input
+                type="password"
+                className="hr-input"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
             </div>
 
-            <div className="hr-auth-demos">
-              {quickAccounts.map((acc) => {
-                const Icon = acc.icon;
-                return (
-                  <button key={acc.loginId} type="button" className="hr-demo-card" onClick={() => quickLogin(acc.loginId)}>
-                    <div className="hr-demo-head">
-                      <span className="hr-demo-role">{acc.role}</span>
-                      <Icon size={14} aria-hidden />
+            <Button type="submit" loading={isSubmitting} icon={<LogIn size={15} />} className="w-full">
+              {isSubmitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+
+          {quickAccounts.length > 0 && (
+            <>
+              <div className="hr-auth-divider">
+                <span>Or continue as</span>
+              </div>
+
+              <div className="hr-auth-demos">
+                {quickAccounts.map((acc) => {
+                  const Icon = acc.icon;
+                  return (
+                    <button
+                      key={acc.loginId}
+                      type="button"
+                      className="hr-demo-card"
+                      onClick={() => quickLogin(acc.loginId)}
+                    >
+                      <div className="hr-demo-head">
+                        <span className="hr-demo-role">{acc.role}</span>
+                        <Icon size={14} aria-hidden />
+                      </div>
+                      <span className="hr-monospace hr-demo-id">{acc.loginId}</span>
+                      <span className="hr-cell-secondary">{acc.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {isLoading && <p className="hr-form-hint">Loading directory…</p>}
+
+          <p className="hr-auth-foot">
+            Need an admin workspace? <Link href="/sign-up">Register here</Link>
+          </p>
+        </div>
+      </div>
+
+      {/* Right — auto-rotating feature panel */}
+      <div className="hr-login-visual">
+        <div className="hr-login-carousel">
+          {SLIDES.map((s, i) => {
+            const Hero = s.Hero;
+            return (
+              <div
+                key={s.title}
+                className={`hr-login-slide ${s.tone}${i === slide ? ' is-active' : ''}`}
+                aria-hidden={i !== slide}
+              >
+                <div className="hr-login-stage">
+                  <div className="hr-login-hero">
+                    <Hero size={52} strokeWidth={1.6} />
+                  </div>
+                  {s.side.map((Icon, idx) => (
+                    <div key={idx} className={`hr-login-orb is-orb-${idx + 1}`}>
+                      <Icon size={18} strokeWidth={1.8} />
                     </div>
-                    <span className="hr-monospace hr-demo-id">{acc.loginId}</span>
-                    <span className="hr-cell-secondary">{acc.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </>
-        )}
+                  ))}
+                </div>
+                <div className="hr-login-caption">
+                  <h3>{s.title}</h3>
+                  <p>{s.sub}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
 
-        {isLoading && <p className="hr-form-hint">Loading directory…</p>}
-
-        <p className="hr-auth-foot">
-          Need an admin workspace? <Link href="/sign-up">Register here</Link>
-        </p>
+        <div className="hr-login-dots">
+          {SLIDES.map((s, i) => (
+            <button
+              key={s.title}
+              type="button"
+              onClick={() => setSlide(i)}
+              className={`hr-login-dot${i === slide ? ' is-active' : ''}`}
+              aria-label={`Show feature ${i + 1}`}
+            />
+          ))}
+        </div>
       </div>
 
       <Modal
