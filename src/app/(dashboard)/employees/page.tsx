@@ -15,6 +15,7 @@ import {
   X,
   ExternalLink,
   Plane,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function EmployeeDirectoryPage() {
@@ -33,6 +34,16 @@ export default function EmployeeDirectoryPage() {
   const [newDept, setNewDept] = useState('Engineering');
   const [newJobPos, setNewJobPos] = useState('Software Engineer');
   const [newWage, setNewWage] = useState('75000');
+
+  // Validation Error state
+  const [formErrors, setFormErrors] = useState<{
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    jobPos?: string;
+    wage?: string;
+  }>({});
 
   // Success state after creation
   const [createdCredential, setCreatedCredential] = useState<{
@@ -57,16 +68,82 @@ export default function EmployeeDirectoryPage() {
     return nameMatch && deptMatch && statusMatch;
   });
 
+  // Sanitized Change Handlers
+  const handleFirstNameChange = (val: string) => {
+    const sanitized = val.replace(/[^a-zA-Z\s'-]/g, '');
+    setNewFirstName(sanitized);
+    if (formErrors.firstName) setFormErrors((prev) => ({ ...prev, firstName: undefined }));
+  };
+
+  const handleLastNameChange = (val: string) => {
+    const sanitized = val.replace(/[^a-zA-Z\s'-]/g, '');
+    setNewLastName(sanitized);
+    if (formErrors.lastName) setFormErrors((prev) => ({ ...prev, lastName: undefined }));
+  };
+
+  const handlePhoneChange = (val: string) => {
+    const sanitized = val.replace(/[^+\d\s-()]/g, '');
+    setNewPhone(sanitized);
+    if (formErrors.phone) setFormErrors((prev) => ({ ...prev, phone: undefined }));
+  };
+
+  const handleEmailChange = (val: string) => {
+    setNewEmail(val);
+    if (formErrors.email) setFormErrors((prev) => ({ ...prev, email: undefined }));
+  };
+
+  const handleWageChange = (val: string) => {
+    setNewWage(val);
+    if (formErrors.wage) setFormErrors((prev) => ({ ...prev, wage: undefined }));
+  };
+
+  const validateForm = () => {
+    const errors: typeof formErrors = {};
+
+    if (!newFirstName.trim() || newFirstName.trim().length < 2) {
+      errors.firstName = 'First Name must contain at least 2 letters (characters only).';
+    }
+
+    if (!newLastName.trim() || newLastName.trim().length < 1) {
+      errors.lastName = 'Last Name must contain alphabetic characters only.';
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!newEmail.trim() || !emailRegex.test(newEmail.trim())) {
+      errors.email = 'Please enter a valid email address (e.g. name@company.com).';
+    }
+
+    if (newPhone.trim()) {
+      const phoneRegex = /^[+\d\s-()]{7,20}$/;
+      if (!phoneRegex.test(newPhone.trim())) {
+        errors.phone = 'Phone number must contain digits and valid symbols only (e.g. +1 555-019-2834).';
+      }
+    }
+
+    const numWage = Number(newWage);
+    if (isNaN(numWage) || numWage <= 0) {
+      errors.wage = 'Monthly fixed wage must be a positive number greater than 0.';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleCreateEmployee = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     const { profile, tempPass } = addEmployee({
       role: 'EMPLOYEE',
-      first_name: newFirstName,
-      last_name: newLastName,
-      email: newEmail,
-      phone: newPhone,
+      first_name: newFirstName.trim(),
+      last_name: newLastName.trim(),
+      email: newEmail.trim(),
+      phone: newPhone.trim(),
       department: newDept,
-      job_position: newJobPos,
+      job_position: newJobPos.trim(),
       initialSalary: Number(newWage) || 75000,
     });
 
@@ -80,6 +157,7 @@ export default function EmployeeDirectoryPage() {
     setNewLastName('');
     setNewEmail('');
     setNewPhone('');
+    setFormErrors({});
   };
 
   const handleCopyCredentials = () => {
@@ -88,6 +166,12 @@ export default function EmployeeDirectoryPage() {
     navigator.clipboard.writeText(text);
     setCopiedPass(true);
     setTimeout(() => setCopiedPass(false), 2000);
+  };
+
+  const openNewEmployeeModal = () => {
+    setFormErrors({});
+    setCreatedCredential(null);
+    setIsModalOpen(true);
   };
 
   return (
@@ -110,10 +194,7 @@ export default function EmployeeDirectoryPage() {
 
         {currentRole === 'ADMIN' && (
           <button
-            onClick={() => {
-              setCreatedCredential(null);
-              setIsModalOpen(true);
-            }}
+            onClick={openNewEmployeeModal}
             className="inline-flex items-center justify-center space-x-2 px-5 py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-black font-bold text-sm shadow-xl transition-all duration-200 cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
@@ -287,7 +368,17 @@ export default function EmployeeDirectoryPage() {
                   </div>
                 </div>
 
-                <form onSubmit={handleCreateEmployee} className="space-y-4">
+                {Object.keys(formErrors).length > 0 && (
+                  <div className="mb-4 p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-zinc-200 flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 text-white shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold block text-white">Validation Error</span>
+                      <span>Please correct the highlighted fields before submitting.</span>
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleCreateEmployee} className="space-y-4" noValidate>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1">
@@ -297,11 +388,19 @@ export default function EmployeeDirectoryPage() {
                         type="text"
                         required
                         value={newFirstName}
-                        onChange={(e) => setNewFirstName(e.target.value)}
+                        onChange={(e) => handleFirstNameChange(e.target.value)}
                         placeholder="e.g. Sarah"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white"
+                        className={`w-full bg-black border ${
+                          formErrors.firstName ? 'border-red-500 focus:border-red-400' : 'border-zinc-800 focus:border-white'
+                        } rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors`}
                       />
+                      {formErrors.firstName && (
+                        <span className="block text-[10px] text-zinc-400 mt-1 font-medium">
+                          {formErrors.firstName}
+                        </span>
+                      )}
                     </div>
+
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1">
                         Last Name *
@@ -310,10 +409,17 @@ export default function EmployeeDirectoryPage() {
                         type="text"
                         required
                         value={newLastName}
-                        onChange={(e) => setNewLastName(e.target.value)}
+                        onChange={(e) => handleLastNameChange(e.target.value)}
                         placeholder="e.g. Jenkins"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white"
+                        className={`w-full bg-black border ${
+                          formErrors.lastName ? 'border-red-500 focus:border-red-400' : 'border-zinc-800 focus:border-white'
+                        } rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors`}
                       />
+                      {formErrors.lastName && (
+                        <span className="block text-[10px] text-zinc-400 mt-1 font-medium">
+                          {formErrors.lastName}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -326,22 +432,37 @@ export default function EmployeeDirectoryPage() {
                         type="email"
                         required
                         value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
+                        onChange={(e) => handleEmailChange(e.target.value)}
                         placeholder="sarah@acme.com"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white font-mono"
+                        className={`w-full bg-black border ${
+                          formErrors.email ? 'border-red-500 focus:border-red-400' : 'border-zinc-800 focus:border-white'
+                        } rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors font-mono`}
                       />
+                      {formErrors.email && (
+                        <span className="block text-[10px] text-zinc-400 mt-1 font-medium">
+                          {formErrors.email}
+                        </span>
+                      )}
                     </div>
+
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1">
-                        Phone Number
+                        Phone Number (Digits only)
                       </label>
                       <input
                         type="tel"
                         value={newPhone}
-                        onChange={(e) => setNewPhone(e.target.value)}
-                        placeholder="+1 (555) 019-2834"
-                        className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white font-mono"
+                        onChange={(e) => handlePhoneChange(e.target.value)}
+                        placeholder="+1 555-019-2834"
+                        className={`w-full bg-black border ${
+                          formErrors.phone ? 'border-red-500 focus:border-red-400' : 'border-zinc-800 focus:border-white'
+                        } rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors font-mono`}
                       />
+                      {formErrors.phone && (
+                        <span className="block text-[10px] text-zinc-400 mt-1 font-medium">
+                          {formErrors.phone}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -362,6 +483,7 @@ export default function EmployeeDirectoryPage() {
                         <option value="Human Resources">Human Resources</option>
                       </select>
                     </div>
+
                     <div>
                       <label className="block text-xs font-bold text-zinc-300 mb-1">
                         Job Position
@@ -369,7 +491,7 @@ export default function EmployeeDirectoryPage() {
                       <input
                         type="text"
                         value={newJobPos}
-                        onChange={(e) => setNewJobPos(e.target.value)}
+                        onChange={(e) => setNewJobPos(e.target.value.replace(/[^a-zA-Z0-9\s/'-]/g, ''))}
                         placeholder="e.g. Product Specialist"
                         className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white"
                       />
@@ -378,15 +500,24 @@ export default function EmployeeDirectoryPage() {
 
                   <div>
                     <label className="block text-xs font-bold text-zinc-300 mb-1">
-                      Monthly Fixed Wage (INR ₹)
+                      Monthly Fixed Wage (INR ₹) *
                     </label>
                     <input
                       type="number"
+                      required
+                      min={1}
                       value={newWage}
-                      onChange={(e) => setNewWage(e.target.value)}
+                      onChange={(e) => handleWageChange(e.target.value)}
                       placeholder="75000"
-                      className="w-full bg-black border border-zinc-800 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-white font-mono"
+                      className={`w-full bg-black border ${
+                        formErrors.wage ? 'border-red-500 focus:border-red-400' : 'border-zinc-800 focus:border-white'
+                      } rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none transition-colors font-mono`}
                     />
+                    {formErrors.wage && (
+                      <span className="block text-[10px] text-zinc-400 mt-1 font-medium">
+                        {formErrors.wage}
+                      </span>
+                    )}
                   </div>
 
                   <div className="pt-2 flex justify-end space-x-3">
@@ -399,7 +530,7 @@ export default function EmployeeDirectoryPage() {
                     </button>
                     <button
                       type="submit"
-                      className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow-lg"
+                      className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow-lg cursor-pointer"
                     >
                       Create & Generate Credentials
                     </button>
