@@ -23,6 +23,23 @@ export interface SalaryBreakdown {
 }
 
 /**
+ * Auto-generates custom Login ID pattern (hrms.excalidraw):
+ * OI + [First 2 letters of First Name] + [First 2 letters of Last Name] + [Joining Year] + [4-digit sequence]
+ * Example: Sarah Jenkins -> OISAJE20260001
+ */
+export function generateLoginId(
+  firstName: string,
+  lastName: string,
+  joiningYear: string = '2026',
+  sequenceNum: number = 1
+): string {
+  const f2 = (firstName.trim().slice(0, 2) || 'XX').toUpperCase();
+  const l2 = (lastName.trim().slice(0, 2) || 'XX').toUpperCase();
+  const seq = String(sequenceNum).padStart(4, '0');
+  return `OI${f2}${l2}${joiningYear}${seq}`;
+}
+
+/**
  * Calculates statutory salary components according to hrms.excalidraw specs:
  * 
  * - Basic Salary = 50% of monthly wage

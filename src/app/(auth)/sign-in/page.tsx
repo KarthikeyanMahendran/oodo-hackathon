@@ -4,16 +4,26 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { Building2, LogIn, Lock, User, Sparkles, ShieldCheck } from 'lucide-react';
+import { Building2, LogIn, Lock, User, Sparkles, ShieldCheck, KeyRound, Check, X, ShieldAlert } from 'lucide-react';
 
 export default function SignInPage() {
   const router = useRouter();
-  const { login } = useHRMS();
+  const { login, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
 
   const [loginIdOrEmail, setLoginIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // OTP Reset Modal State
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+  const [resetQuery, setResetQuery] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [demoOtp, setDemoOtp] = useState('');
+  const [inputOtp, setInputOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,16 +35,47 @@ export default function SignInPage() {
       if (success) {
         router.push('/employees');
       } else {
-        setErrorMsg('Invalid Login ID / Email or Password. Try one-click demo accounts below.');
+        setErrorMsg('Invalid Login ID / Email or Password. Default password for all users is "pass123".');
         setIsSubmitting(false);
       }
-    }, 400);
+    }, 300);
   };
 
   const handleQuickDemoLogin = (loginId: string) => {
     const success = login(loginId, 'pass123');
     if (success) {
       router.push('/employees');
+    }
+  };
+
+  const handleSendOtp = (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+    const result = sendPasswordResetOTP(resetQuery);
+    if (result.success && result.otp) {
+      setOtpSent(true);
+      setDemoOtp(result.otp);
+      setOtpSuccessMsg(result.message);
+    } else {
+      setOtpError(result.message);
+    }
+  };
+
+  const handleVerifyAndReset = (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError('');
+
+    if (inputOtp.trim() !== demoOtp) {
+      setOtpError('Invalid OTP code. Please enter the 6-digit code sent to your email.');
+      return;
+    }
+
+    const result = resetPasswordWithOTP(resetQuery, newPassword);
+    if (result.success) {
+      setIsOtpModalOpen(false);
+      router.push('/employees');
+    } else {
+      setOtpError(result.message);
     }
   };
 
@@ -50,7 +91,7 @@ export default function SignInPage() {
             Sign In to Dayflow
           </h2>
           <p className="text-xs text-zinc-400 font-mono">
-            Every workday, perfectly aligned.
+            Every workday, perfectly aligned. Default password: <strong className="text-white">pass123</strong>
           </p>
         </div>
 
@@ -79,9 +120,23 @@ export default function SignInPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-300 mb-1.5 uppercase tracking-wider">
-              Password
-            </label>
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                Password
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setResetQuery(loginIdOrEmail);
+                  setOtpSent(false);
+                  setOtpError('');
+                  setIsOtpModalOpen(true);
+                }}
+                className="text-[11px] font-bold text-zinc-400 hover:text-white underline underline-offset-2"
+              >
+                Forgot Password / OTP Reset?
+              </button>
+            </div>
             <div className="relative">
               <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
               <input
@@ -105,11 +160,11 @@ export default function SignInPage() {
           </button>
         </form>
 
-        {/* Demo Preset Credentials section */}
+        {/* Demo Credentials section */}
         <div className="pt-4 border-t border-zinc-800 space-y-3">
           <div className="flex items-center justify-between text-xs text-zinc-400">
             <span className="font-bold text-zinc-300 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-white" /> One-Click Demo Personas:
+              <Sparkles className="w-3.5 h-3.5 text-white" /> Quick Demo Accounts (Pass: pass123):
             </span>
           </div>
 
@@ -119,23 +174,23 @@ export default function SignInPage() {
               className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-500 text-left transition-all group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-white">HR Admin</span>
+                <span className="text-xs font-extrabold text-white">Sarah Jenkins</span>
                 <ShieldCheck className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <span className="block text-[11px] text-zinc-400 font-mono mt-0.5">OISAJE20260001</span>
-              <span className="block text-[10px] text-zinc-500">Sarah Jenkins</span>
+              <span className="block text-[10px] text-zinc-400 font-mono mt-0.5">OISAJE20260001</span>
+              <span className="block text-[9px] uppercase font-bold text-white mt-1">HR ADMIN</span>
             </button>
 
             <button
-              onClick={() => handleQuickDemoLogin('OIALRI20260002')}
+              onClick={() => handleQuickDemoLogin('OIMACH20260003')}
               className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-500 text-left transition-all group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold text-zinc-200">Employee</span>
+                <span className="text-xs font-extrabold text-zinc-200">Marcus Chen</span>
                 <User className="w-3.5 h-3.5 text-zinc-400" />
               </div>
-              <span className="block text-[11px] text-zinc-400 font-mono mt-0.5">OIALRI20260002</span>
-              <span className="block text-[10px] text-zinc-500">Alex Rivera</span>
+              <span className="block text-[10px] text-zinc-400 font-mono mt-0.5">OIMACH20260003</span>
+              <span className="block text-[9px] uppercase font-bold text-zinc-400 mt-1">EMPLOYEE</span>
             </button>
           </div>
         </div>
@@ -150,6 +205,126 @@ export default function SignInPage() {
           </p>
         </div>
       </div>
+
+      {/* Forgot Password OTP Modal */}
+      {isOtpModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button
+              onClick={() => setIsOtpModalOpen(false)}
+              className="absolute top-5 right-5 text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-900"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-5">
+              <div className="p-2.5 rounded-2xl bg-white text-black font-bold">
+                <KeyRound className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">Reset Password via OTP</h3>
+                <p className="text-xs text-zinc-400">
+                  Verify identity and change initial default password
+                </p>
+              </div>
+            </div>
+
+            {otpError && (
+              <div className="mb-4 p-3 rounded-xl bg-zinc-900 border border-zinc-700 text-xs text-white flex items-center space-x-2">
+                <ShieldAlert className="w-4 h-4 text-white shrink-0" />
+                <span>{otpError}</span>
+              </div>
+            )}
+
+            {!otpSent ? (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-300 mb-1">
+                    Enter Login ID or Email *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={resetQuery}
+                    onChange={(e) => setResetQuery(e.target.value)}
+                    placeholder="e.g. OISAJE20260001 or sarah.jenkins@acme.com"
+                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-white font-mono"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsOtpModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-bold hover:bg-zinc-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow"
+                  >
+                    Send OTP Verification
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyAndReset} className="space-y-4">
+                <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-zinc-300">
+                  <span className="font-bold text-white block mb-0.5">Verification Code Dispatched!</span>
+                  <span>{otpSuccessMsg}</span>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-300 mb-1">
+                    Enter 6-Digit OTP Code *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={inputOtp}
+                    onChange={(e) => setInputOtp(e.target.value)}
+                    placeholder="e.g. 849201"
+                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-sm text-center text-white tracking-widest font-mono focus:outline-none focus:border-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-zinc-300 mb-1">
+                    New Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password (min 6 chars)"
+                    className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-white font-mono"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setOtpSent(false)}
+                    className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-300 text-xs font-bold hover:bg-zinc-800"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-white hover:bg-zinc-200 text-black text-xs font-extrabold shadow"
+                  >
+                    Verify OTP & Reset Password
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

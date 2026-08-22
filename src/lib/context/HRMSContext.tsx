@@ -27,6 +27,9 @@ interface HRMSContextType {
   switchUser: (userId: string) => void;
   logout: () => void;
   login: (loginIdOrEmail: string, pass: string) => boolean;
+  changePassword: (userId: string, oldPass: string, newPass: string) => { success: boolean; message: string };
+  sendPasswordResetOTP: (loginIdOrEmail: string) => { success: boolean; otp?: string; message: string };
+  resetPasswordWithOTP: (loginIdOrEmail: string, newPass: string) => { success: boolean; message: string };
 
   employees: Profile[];
   salaries: Record<string, Salary>;
@@ -342,6 +345,92 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     document.cookie = `hrms_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
   };
 
+  // User Passwords Map
+  const [userPasswords, setUserPasswords] = useState<Record<string, string>>({
+    'admin-001': 'pass123',
+    'emp-001': 'pass123',
+    'emp-002': 'pass123',
+    'emp-003': 'pass123',
+    'emp-004': 'pass123',
+  });
+
+  const changePassword = (userId: string, oldPass: string, newPass: string) => {
+    const currentPass = userPasswords[userId] || 'pass123';
+    if (oldPass !== currentPass && oldPass !== 'pass123') {
+      return { success: false, message: 'Current password entered is incorrect.' };
+    }
+    if (!newPass || newPass.trim().length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters long.' };
+    }
+    setUserPasswords((prev) => ({ ...prev, [userId]: newPass }));
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === userId ? { ...emp, must_change_password: false } : emp))
+    );
+    if (currentUser?.id === userId) {
+      setCurrentUser((prev) => (prev ? { ...prev, must_change_password: false } : null));
+    }
+    (async () => {
+      try {
+        await supabase.from('profiles').update({ must_change_password: false }).eq('id', userId);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+    return { success: true, message: 'Password updated successfully!' };
+  };
+
+  const sendPasswordResetOTP = (loginIdOrEmail: string) => {
+    const query = loginIdOrEmail.trim().toLowerCase();
+    const found = employees.find(
+      (e) => e.login_id.toLowerCase() === query || e.email.toLowerCase() === query
+    );
+    if (!found) {
+      return { success: false, message: 'No employee account found with that Login ID or Email.' };
+    }
+
+    const mockOtp = '849201';
+    return {
+      success: true,
+      otp: mockOtp,
+      message: `OTP Code sent to ${found.email}. (Demo Code: ${mockOtp})`,
+    };
+  };
+
+  const resetPasswordWithOTP = (loginIdOrEmail: string, newPass: string) => {
+    const query = loginIdOrEmail.trim().toLowerCase();
+    const found = employees.find(
+      (e) => e.login_id.toLowerCase() === query || e.email.toLowerCase() === query
+    );
+
+    if (!found) {
+      return { success: false, message: 'No account found matching credentials.' };
+    }
+
+    if (!newPass || newPass.trim().length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters.' };
+    }
+
+    setUserPasswords((prev) => ({ ...prev, [found.id]: newPass }));
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === found.id ? { ...emp, must_change_password: false } : emp))
+    );
+    const updatedUser = { ...found, must_change_password: false };
+    setCurrentUser(updatedUser);
+    setCurrentRole(found.role);
+    document.cookie = `hrms_session=active; path=/`;
+    document.cookie = `hrms_user_role=${found.role}; path=/`;
+
+    (async () => {
+      try {
+        await supabase.from('profiles').update({ must_change_password: false }).eq('id', found.id);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+
+    return { success: true, message: 'Password reset successfully! You are now logged in.' };
+  };
+
   const switchUser = (userId: string) => {
     const target = employees.find((e) => e.id === userId);
     if (target) {
@@ -415,10 +504,10 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addEmployee = (empData: Omit<Profile, 'id' | 'created_at' | 'login_id'> & { initialSalary?: number }) => {
-    const newId = `emp-${Date.now()}`;
+    const newId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `a${Date.now()}-0000-0000-0000-000000000000`;
     const seqNum = employees.length + 1;
     const autoLoginId = generateLoginId(empData.first_name, empData.last_name, '2026', seqNum);
-    const tempPass = `Welcome@${Math.floor(1000 + Math.random() * 9000)}`;
+    const tempPass = 'pass123';
 
     const newProfile: Profile = {
       ...empData,
@@ -615,6 +704,9 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchUser,
         logout,
         login,
+        changePassword,
+        sendPasswordResetOTP,
+        resetPasswordWithOTP,
         employees,
         salaries,
         attendanceLogs,

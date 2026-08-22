@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     email VARCHAR(255),
     phone VARCHAR(50),
     department VARCHAR(100),
+    job_position VARCHAR(100),
+    date_of_joining DATE,
     manager_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     avatar_url TEXT,
     about TEXT,
@@ -48,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     bank_name VARCHAR(100),
     bank_account_number VARCHAR(100),
     bank_ifsc VARCHAR(50),
+    must_change_password BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
@@ -55,6 +58,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- Ensure all optional columns exist if table was created previously without them
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS email VARCHAR(255);
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS department VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS job_position VARCHAR(100);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS date_of_joining DATE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS about TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS skills TEXT[];
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS certifications TEXT[];
@@ -66,6 +72,7 @@ ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS date_of_birth DATE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100);
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(100);
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS bank_ifsc VARCHAR(50);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- 3. Salaries Table
@@ -120,9 +127,3 @@ ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.time_off ENABLE ROW LEVEL SECURITY;
 
 -- Permissive RLS policies for application access
-CREATE POLICY "Allow public select profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated insert/update profiles" ON public.profiles FOR ALL USING (true);
-
-CREATE POLICY "Allow access salaries" ON public.salaries FOR ALL USING (true);
-CREATE POLICY "Allow access attendance" ON public.attendance FOR ALL USING (true);
-CREATE POLICY "Allow access time_off" ON public.time_off FOR ALL USING (true);
