@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, LogOut, MonitorCheck, User, ChevronDown } from 'lucide-react';
+import { Menu, LogOut, MonitorCheck, User, ChevronDown, Compass } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useAttendance } from '@/lib/hooks';
+import { startProductTour } from './ProductTour';
 
 const TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -56,7 +57,7 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
       <h1 className="hr-topbar-title">{title}</h1>
 
       <div className="hr-topbar-right">
-        <span className={`hr-punch-pill ${isPunchedIn ? 'is-live' : ''}`.trim()}>
+        <span id="tour-punch-pill" className={`hr-punch-pill ${isPunchedIn ? 'is-live' : ''}`.trim()}>
           <MonitorCheck size={14} aria-hidden />
           <span className="hr-monospace">{isPunchedIn ? elapsedLabel : '00:00:00'}</span>
           <span className="hr-punch-pill-sep">·</span>
@@ -64,7 +65,7 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
         </span>
 
         {/* Top-Right User Name Button (No profile photo) */}
-        <div style={{ position: 'relative', marginLeft: '12px' }}>
+        <div id="tour-user-menu" style={{ position: 'relative', marginLeft: '12px' }}>
           <button
             type="button"
             onClick={() => setDropdownOpen((prev) => !prev)}
@@ -146,6 +147,36 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                   <User size={15} style={{ color: '#71717a' }} />
                   <span>My Profile</span>
                 </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    // Let the menu close before the highlight box is measured.
+                    setTimeout(() => startProductTour(), 50);
+                  }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: 'var(--text, #27272a)',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background-color 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-hover, #f4f4f5)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                >
+                  <Compass size={15} style={{ color: '#71717a' }} />
+                  <span>Take a tour</span>
+                </button>
 
                 <button
                   type="button"

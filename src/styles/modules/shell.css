@@ -286,3 +286,90 @@
   .hr-punch-pill span:not(.hr-monospace):not(.hr-punch-pill-sep) { display: none; }
   .hr-punch-pill-sep { display: none; }
 }
+
+/* ============================================
+   PRODUCT TOUR — driver.js popover, restyled
+   to match the app's tokens instead of the
+   library's stock blue/rounded look.
+   ============================================ */
+.driver-popover.hr-tour-popover {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-md);
+  max-width: 320px;
+  font-family: var(--font-family);
+}
+
+.driver-popover.hr-tour-popover .driver-popover-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.driver-popover.hr-tour-popover .driver-popover-description {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.driver-popover.hr-tour-popover .driver-popover-progress-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-subtle);
+  letter-spacing: 0.03em;
+}
+
+.driver-popover.hr-tour-popover .driver-popover-footer {
+  margin-top: var(--space-md);
+  gap: var(--space-xs);
+}
+
+.driver-popover.hr-tour-popover .driver-popover-navigation-btns button {
+  background: var(--surface-sunken);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 13px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  text-shadow: none;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.driver-popover.hr-tour-popover .driver-popover-navigation-btns button:hover {
+  background: var(--gray-100);
+  border-color: var(--border-strong);
+}
+/* The rightmost button is Next/Done — make it the primary action. */
+.driver-popover.hr-tour-popover .driver-popover-navigation-btns button:last-child {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+}
+.driver-popover.hr-tour-popover .driver-popover-navigation-btns button:last-child:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.driver-popover.hr-tour-popover .driver-popover-close-btn {
+  color: var(--text-subtle);
+  font-size: 20px;
+  transition: var(--transition-fast);
+}
+.driver-popover.hr-tour-popover .driver-popover-close-btn:hover {
+  color: var(--text);
+}
+
+.driver-popover.hr-tour-popover .driver-popover-arrow-side-left.driver-popover-arrow   { border-left-color: var(--surface); }
+.driver-popover.hr-tour-popover .driver-popover-arrow-side-right.driver-popover-arrow  { border-right-color: var(--surface); }
+.driver-popover.hr-tour-popover .driver-popover-arrow-side-top.driver-popover-arrow    { border-top-color: var(--surface); }
+.driver-popover.hr-tour-popover .driver-popover-arrow-side-bottom.driver-popover-arrow { border-bottom-color: var(--surface); }
+
+/* Keep the highlighted element clear of the sidebar's sticky stacking. */
+.driver-active .hr-sidebar { z-index: auto; }

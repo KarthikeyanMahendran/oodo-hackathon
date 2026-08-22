@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
+import ProductTour from './ProductTour';
 
 const BARE_ROUTES = ['/sign-in'];
 
@@ -24,6 +25,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Topbar onToggleSidebar={() => setSidebarOpen((v) => !v)} />
         <main className="hr-content">{children}</main>
       </div>
+      <ProductTour />
     </div>
   );
 }
