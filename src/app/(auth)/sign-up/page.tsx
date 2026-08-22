@@ -29,7 +29,7 @@ export default function SignUpPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const { profile } = addEmployee({
         role: 'ADMIN',
         first_name: firstName || 'Company',
@@ -42,7 +42,7 @@ export default function SignUpPage() {
         about: `Founder & HR Admin at ${companyName || 'Dayflow Organization'}.`,
       });
 
-      login(profile.login_id, password);
+      await login(profile.login_id, password);
       router.push('/dashboard');
     }, 600);
   };

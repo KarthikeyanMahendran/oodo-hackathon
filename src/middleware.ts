@@ -16,7 +16,7 @@ export function middleware(request: NextRequest) {
   // Public auth paths
   const isAuthPath = pathname === '/sign-in' || pathname === '/sign-up';
   
-  // Get mock or real session cookie/token
+  // Session cookie set by the sign-in flow.
   const sessionCookie = request.cookies.get('hrms_session')?.value || request.cookies.get('sb-access-token')?.value;
   const userRole = request.cookies.get('hrms_user_role')?.value || 'EMPLOYEE';
 

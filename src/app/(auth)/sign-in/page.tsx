@@ -7,37 +7,39 @@ import { LogIn, ShieldCheck, User } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { Button, Input } from '@/components/ui';
 
-const DEMO_ACCOUNTS = [
-  { loginId: 'OISAJE20260001', role: 'HR Admin', name: 'Sarah Jenkins', icon: ShieldCheck },
-  { loginId: 'OIALRI20260002', role: 'Employee', name: 'Alex Rivera', icon: User },
-];
-
 export default function SignInPage() {
   const router = useRouter();
-  const { login } = useHRMS();
+  const { login, employees, isLoading } = useHRMS();
+
+  // Sign-in shortcuts are built from the real directory, not a hardcoded list.
+  const quickAccounts = employees.slice(0, 2).map((e) => ({
+    loginId: e.login_id,
+    role: e.role === 'ADMIN' ? 'HR Admin' : e.job_position || 'Employee',
+    name: `${e.first_name} ${e.last_name}`.trim(),
+    icon: e.role === 'ADMIN' ? ShieldCheck : User,
+  }));
 
   const [loginIdOrEmail, setLoginIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      if (login(loginIdOrEmail, password)) {
-        router.push('/dashboard');
-      } else {
-        setErrorMsg('Invalid login ID / email or password. Try a demo account below.');
-        setIsSubmitting(false);
-      }
-    }, 400);
+    const ok = await login(loginIdOrEmail, password);
+    if (ok) {
+      router.push('/dashboard');
+    } else {
+      setErrorMsg('No employee found for that login ID or email.');
+      setIsSubmitting(false);
+    }
   };
 
-  const quickLogin = (loginId: string) => {
-    if (login(loginId, 'pass123')) router.push('/dashboard');
+  const quickLogin = async (loginId: string) => {
+    if (await login(loginId, 'pass123')) router.push('/dashboard');
   };
 
   return (
@@ -74,12 +76,14 @@ export default function SignInPage() {
           </Button>
         </form>
 
+        {quickAccounts.length > 0 && (
+          <>
         <div className="hr-auth-divider">
-          <span>Or use a demo persona</span>
+          <span>Or continue as</span>
         </div>
 
         <div className="hr-auth-demos">
-          {DEMO_ACCOUNTS.map((acc) => {
+          {quickAccounts.map((acc) => {
             const Icon = acc.icon;
             return (
               <button key={acc.loginId} type="button" className="hr-demo-card" onClick={() => quickLogin(acc.loginId)}>
@@ -93,6 +97,10 @@ export default function SignInPage() {
             );
           })}
         </div>
+          </>
+        )}
+
+        {isLoading && <p className="hr-form-hint">Loading directory…</p>}
 
         <p className="hr-auth-foot">
           Need an admin workspace? <Link href="/sign-up">Register here</Link>
