@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     must_change_password BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN DEFAULT FALSE;
 
 CREATE TABLE IF NOT EXISTS salaries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,6 +78,7 @@ CREATE TABLE IF NOT EXISTS time_off (
     admin_comment TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE time_off ADD COLUMN IF NOT EXISTS admin_comment TEXT;
 
 -- ==========================================
 -- 3. E-SIGNATURE TABLES
@@ -100,6 +102,7 @@ CREATE TABLE IF NOT EXISTS esign_envelopes (
     signed_on TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE esign_envelopes ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES profiles(id) ON DELETE CASCADE;
 
 -- ==========================================
 -- 4. NEW ADD-ON FEATURES (CLAIMS, ASSETS, FEED)
@@ -155,7 +158,7 @@ ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE it_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_feed ENABLE ROW LEVEL SECURITY;
 
--- Core Policies (Drop if exists first for idempotent execution)
+-- Core Policies
 DROP POLICY IF EXISTS "Users view/update own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins full access profiles" ON profiles;
 CREATE POLICY "Users view/update own profile" ON profiles FOR ALL USING (auth.uid() = id);
@@ -184,7 +187,7 @@ CREATE POLICY "Admins manage templates" ON esign_template_types FOR ALL USING (i
 
 DROP POLICY IF EXISTS "Users view own envelopes" ON esign_envelopes;
 DROP POLICY IF EXISTS "Admins manage envelopes" ON esign_envelopes;
-CREATE POLICY "Users view own envelopes" ON esign_envelopes FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users view own envelopes" ON esign_envelopes FOR SELECT USING (user_id IS NULL OR auth.uid() = user_id);
 CREATE POLICY "Admins manage envelopes" ON esign_envelopes FOR ALL USING (is_admin());
 
 -- Add-On Policies
@@ -195,7 +198,7 @@ CREATE POLICY "Admins full access claims" ON claims FOR ALL USING (is_admin());
 
 DROP POLICY IF EXISTS "Users view own assigned assets" ON it_assets;
 DROP POLICY IF EXISTS "Admins full access assets" ON it_assets;
-CREATE POLICY "Users view own assigned assets" ON it_assets FOR SELECT USING (auth.uid() = assigned_to);
+CREATE POLICY "Users view own assigned assets" ON it_assets FOR SELECT USING (assigned_to IS NULL OR auth.uid() = assigned_to);
 CREATE POLICY "Admins full access assets" ON it_assets FOR ALL USING (is_admin());
 
 DROP POLICY IF EXISTS "Everyone can read feed" ON company_feed;
