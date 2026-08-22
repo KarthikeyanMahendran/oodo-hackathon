@@ -33,7 +33,7 @@ export default function EmployeeDirectoryPage() {
     {
       header: 'Employee',
       render: (row) => (
-        <Link href={`/employees/${row.id}`} className="hr-cell-link">
+        <Link href={`/employees/${row.login_id || row.id}`} className="hr-cell-link">
           <span className="hr-avatar hr-avatar-sm">
             {`${row.first_name?.[0] ?? ''}${row.last_name?.[0] ?? ''}`.toUpperCase()}
           </span>

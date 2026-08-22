@@ -9,7 +9,7 @@ export default function ProfilePage() {
   const { currentUser } = useHRMS();
 
   useEffect(() => {
-    router.replace(currentUser ? `/employees/${currentUser.id}` : '/sign-in');
+    router.replace(currentUser ? `/employees/${currentUser.login_id || currentUser.id}` : '/sign-in');
   }, [currentUser, router]);
 
   return null;
