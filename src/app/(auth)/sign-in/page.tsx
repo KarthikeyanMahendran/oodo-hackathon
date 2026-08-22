@@ -3,18 +3,21 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { LogIn, ShieldCheck, User, KeyRound } from 'lucide-react';
+import { LogIn, ShieldCheck, User } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { Button, Input, Modal } from '@/components/ui';
 
-const DEMO_ACCOUNTS = [
-  { loginId: 'OISAJE20260001', role: 'HR Admin', name: 'Sarah Jenkins', icon: ShieldCheck },
-  { loginId: 'OIALRI20260002', role: 'Employee', name: 'Alex Rivera', icon: User },
-];
-
 export default function SignInPage() {
   const router = useRouter();
-  const { login, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
+  const { login, employees, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
+
+  // Sign-in shortcuts are built from the real directory
+  const quickAccounts = employees.slice(0, 2).map((e) => ({
+    loginId: e.login_id,
+    role: e.role === 'ADMIN' ? 'HR Admin' : e.job_position || 'Employee',
+    name: `${e.first_name} ${e.last_name}`.trim(),
+    icon: e.role === 'ADMIN' ? ShieldCheck : User,
+  }));
 
   const [loginIdOrEmail, setLoginIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,23 +34,28 @@ export default function SignInPage() {
   const [otpError, setOtpError] = useState('');
   const [otpSuccessMsg, setOtpSuccessMsg] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      if (login(loginIdOrEmail, password)) {
+    try {
+      const ok = await login(loginIdOrEmail, password);
+      if (ok) {
         router.push('/dashboard');
       } else {
         setErrorMsg('Invalid Login ID / Email or Password. Default password for all users is "pass123".');
         setIsSubmitting(false);
       }
-    }, 300);
+    } catch (err) {
+      setErrorMsg('Invalid Login ID / Email or Password.');
+      setIsSubmitting(false);
+    }
   };
 
-  const quickLogin = (loginId: string) => {
-    if (login(loginId, 'pass123')) router.push('/dashboard');
+  const quickLogin = async (loginId: string) => {
+    const ok = await login(loginId, 'pass123');
+    if (ok) router.push('/dashboard');
   };
 
   const handleSendOtp = (e: React.FormEvent) => {
@@ -138,7 +146,7 @@ export default function SignInPage() {
         </div>
 
         <div className="hr-auth-demos">
-          {DEMO_ACCOUNTS.map((acc) => {
+          {quickAccounts.map((acc) => {
             const Icon = acc.icon;
             return (
               <button key={acc.loginId} type="button" className="hr-demo-card" onClick={() => quickLogin(acc.loginId)}>

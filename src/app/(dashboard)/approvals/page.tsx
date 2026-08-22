@@ -2,10 +2,10 @@
 
 import { PageHeader } from '@/components/ui';
 import { ApprovalsInbox } from '@/components/features/approvals/ApprovalsInbox';
-import { useApprovals } from '@/lib/hooks';
+import { useLeaveRequests } from '@/lib/hooks';
 
 export default function ApprovalsPage() {
-  const { pendingCount } = useApprovals();
+  const { pendingCount } = useLeaveRequests('all');
 
   return (
     <div className="hr-stack">

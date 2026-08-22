@@ -1,6 +1,6 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Menu, LogOut, MonitorCheck } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useAttendance } from '@/lib/hooks';
@@ -14,6 +14,7 @@ const TITLES: Record<string, string> = {
   '/profile': 'My Profile',
   '/attendance': 'My Attendance',
   '/time-off': 'My Leave',
+  '/calendar': 'Calendar',
   '/my-salary': 'My Salary',
   '/my-payslips': 'My Payslips',
   '/payroll': 'Payroll',
@@ -22,6 +23,7 @@ const TITLES: Record<string, string> = {
 
 export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { currentUser, currentRole, logout } = useHRMS();
   const { isPunchedIn, elapsedLabel } = useAttendance();
 
@@ -62,7 +64,7 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
                 </span>
               </span>
             </div>
-            <button className="hr-topbar-icon" onClick={logout} aria-label="Sign out" title="Sign out">
+            <button className="hr-topbar-icon" onClick={() => { logout(); router.push('/sign-in'); }} aria-label="Sign out" title="Sign out">
               <LogOut size={18} />
             </button>
           </>

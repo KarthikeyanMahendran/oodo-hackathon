@@ -12,6 +12,7 @@ import {
   UserRoundPen,
   CalendarCheck,
   CalendarDays,
+  CalendarRange,
   Wallet,
   ReceiptText,
   CheckSquare,
@@ -26,7 +27,7 @@ import {
   Monitor,
 } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { useApprovals } from '@/lib/hooks';
+import { useLeaveRequests } from '@/lib/hooks';
 
 interface NavItem {
   href: string;
@@ -44,7 +45,7 @@ interface NavSection {
 export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const { currentRole } = useHRMS();
-  const { pendingCount } = useApprovals();
+  const { pendingCount } = useLeaveRequests('all');
   const isAdmin = currentRole === 'ADMIN';
 
   const [esignOpen, setEsignOpen] = useState(() => pathname.startsWith('/esign'));
@@ -69,6 +70,7 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
         { href: '/profile', label: 'My Profile', icon: UserRoundPen },
         { href: '/attendance', label: 'My Attendance', icon: CalendarCheck },
         { href: '/time-off', label: 'My Leave', icon: CalendarDays },
+        { href: '/calendar', label: 'Calendar', icon: CalendarRange },
         { href: '/my-salary', label: 'My Salary', icon: Wallet },
       ],
     },

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Users, Stethoscope, Building2, ShieldCheck, Clock, Plus, ArrowRight } from 'lucide-react';
+import { Users, CalendarOff, Building2, ShieldCheck, Clock, Plus, ArrowRight } from 'lucide-react';
 import { Card, Button, Table, StatusBadge, type Column } from '@/components/ui';
 import { EmployeeModal } from '@/components/features/employees/EmployeeModal';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { useAttendance, useEmployees } from '@/lib/hooks';
+import { useAttendance, useEmployees, useOrgStructure } from '@/lib/hooks';
 import type { Profile } from '@/lib/types/hrms';
 
 const dateFmt = new Intl.DateTimeFormat('en-IN', {
@@ -47,15 +47,14 @@ function StatTile({ icon, tone, value, label, sub }: TileProps) {
 
 export default function DashboardPage() {
   const { currentUser, currentRole, employees } = useHRMS();
-  const { allEmployees, departments } = useEmployees();
+  const { allEmployees } = useEmployees();
+  const { departments } = useOrgStructure();
   const { summary, teamToday } = useAttendance();
   const [modalOpen, setModalOpen] = useState(false);
 
   const isAdmin = currentRole === 'ADMIN';
   const adminCount = employees.filter((e) => e.role === 'ADMIN').length;
-  const clinical = employees.filter((e) =>
-    /doctor|physician|surgeon|clinic|nurse/i.test(e.job_position || '')
-  ).length;
+  const onLeaveToday = teamToday.filter((r) => r.status === 'LEAVE').length;
 
   const punches = useMemo(() => {
     const withIn = teamToday.filter((r) => r.check_in);
@@ -130,16 +129,16 @@ export default function DashboardPage() {
           sub={`${allEmployees.length} active`}
         />
         <StatTile
-          icon={<Stethoscope size={20} />}
+          icon={<CalendarOff size={20} />}
           tone="green"
-          value={clinical}
-          label="Clinical staff"
-          sub="Doctors & nurses"
+          value={onLeaveToday}
+          label="On leave today"
+          sub="Approved time off"
         />
         <StatTile
           icon={<Building2 size={20} />}
           tone="indigo"
-          value={Math.max(0, departments.length - 1)}
+          value={departments.length}
           label="Departments"
           sub="Across the org"
         />

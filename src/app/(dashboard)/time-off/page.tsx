@@ -6,11 +6,11 @@ import { PageHeader, Tabs, type TabItem } from '@/components/ui';
 import { MyLeaves } from '@/components/features/leave';
 import { ApprovalsInbox } from '@/components/features/approvals/ApprovalsInbox';
 import { useHRMS } from '@/lib/context/HRMSContext';
-import { useApprovals } from '@/lib/hooks';
+import { useLeaveRequests } from '@/lib/hooks';
 
 export default function TimeOffPage() {
   const { currentRole } = useHRMS();
-  const { pendingCount } = useApprovals();
+  const { pendingCount } = useLeaveRequests('all');
   const [active, setActive] = useState('mine');
 
   const tabs: TabItem[] = [

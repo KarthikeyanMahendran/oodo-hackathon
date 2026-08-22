@@ -1,30 +1,25 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  Profile,
-  Salary,
-  AttendanceRecord,
-  TimeOffRecord,
-  LeaveBalance,
-  UserRole,
-  WagePeriod,
-} from '../types/hrms';
-import { calculateSalaryBreakdown, SalaryBreakdown } from '../utils/salaryCalculator';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../supabase/client';
 import { safeWrite } from '../supabase/write';
+import { calculateSalaryBreakdown, type SalaryBreakdown } from '../utils/salaryCalculator';
+import type { AttendanceRecord, Profile, Salary, TimeOffRecord, LeaveBalance, UserRole, WagePeriod } from '../types/hrms';
 
-/** Generated at call time, outside render, so it never runs during a render pass. */
+const SESSION_KEY = 'hrms_active_user';
+
 function generateTempPassword(): string {
-  const n = Math.floor(1000 + Math.random() * 9000);
-  return `Welcome@${n}`;
+  return `Welcome@${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 export function generateLoginId(firstName: string, lastName: string, year = '2026', seq = 1): string {
-  const f = (firstName || 'EM').trim().substring(0, 2).toUpperCase().padEnd(2, 'X');
-  const l = (lastName || 'PY').trim().substring(0, 2).toUpperCase().padEnd(2, 'X');
-  const seqStr = String(seq).padStart(4, '0');
-  return `OI${f}${l}${year}${seqStr}`;
+  const f = (firstName || 'XX').slice(0, 2).toUpperCase();
+  const l = (lastName || 'XX').slice(0, 2).toUpperCase();
+  return `OI${f}${l}${year}${String(seq).padStart(4, '0')}`;
+}
+
+function todayISO(): string {
+  return new Date().toISOString().split('T')[0];
 }
 
 interface HRMSContextType {
@@ -33,7 +28,7 @@ interface HRMSContextType {
   setCurrentRole: (role: UserRole) => void;
   switchUser: (userId: string) => void;
   logout: () => void;
-  login: (loginIdOrEmail: string, pass: string) => boolean;
+  login: (loginIdOrEmail: string, pass: string) => Promise<boolean> | boolean;
   changePassword: (userId: string, oldPass: string, newPass: string) => { success: boolean; message: string };
   sendPasswordResetOTP: (loginIdOrEmail: string) => { success: boolean; otp?: string; message: string };
   resetPasswordWithOTP: (loginIdOrEmail: string, newPass: string) => { success: boolean; message: string };
@@ -48,7 +43,9 @@ interface HRMSContextType {
   elapsedSeconds: number;
   handlePunchToggle: (notes?: string) => void;
 
-  addEmployee: (emp: Omit<Profile, 'id' | 'created_at' | 'login_id'> & { initialSalary?: number }) => { profile: Profile; tempPass: string };
+  addEmployee: (
+    emp: Omit<Profile, 'id' | 'created_at' | 'login_id'> & { initialSalary?: number }
+  ) => { profile: Profile; tempPass: string };
   updateProfile: (profile: Partial<Profile> & { id: string }) => void;
 
   updateSalary: (userId: string, fixedWage: number, period?: WagePeriod) => void;
@@ -57,309 +54,169 @@ interface HRMSContextType {
   applyForTimeOff: (req: Omit<TimeOffRecord, 'id' | 'created_at' | 'status' | 'employee_name' | 'department'>) => void;
   handleTimeOffAction: (id: string, status: 'APPROVED' | 'REJECTED', comment?: string) => void;
   getUserLeaveBalance: (userId: string) => LeaveBalance;
-
   getUserLiveStatus: (userId: string) => 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
 
   isLoading: boolean;
+  loadError: string | null;
+  refresh: () => Promise<void>;
 }
 
 const HRMSContext = createContext<HRMSContextType | undefined>(undefined);
 
-// Sample Profiles based on Excalidraw & Dayflow specifications
-const INITIAL_PROFILES: Profile[] = [
-  {
-    id: 'admin-001',
-    login_id: 'OISAJE20260001',
-    role: 'ADMIN',
-    first_name: 'Sarah',
-    last_name: 'Jenkins',
-    email: 'sarah.jenkins@acme.com',
-    phone: '+1 (555) 019-2834',
-    department: 'Human Resources',
-    job_position: 'VP of Human Resources',
-    date_of_joining: '2022-03-15',
-    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150',
-    about: 'Senior VP of Human Resources leading organizational development, talent acquisition, and employee engagement.',
-    what_i_love_about_job: 'Building collaborative work cultures and empowering talented individuals to grow in their careers.',
-    hobbies: ['Oil Painting', 'Long Distance Running', 'Classic Cinema', 'Mentoring Students'],
-    skills: ['Talent Strategy', 'Labor Compliance', 'Payroll Management', 'Conflict Resolution', 'Executive Coaching'],
-    certifications: ['SHRM-SCP Certified Senior Professional', 'PHR Professional in HR'],
-    address: '742 Evergreen Terrace, Suite 400, San Francisco, CA',
-    personal_email: 'sarah.j.personal@gmail.com',
-    nationality: 'American',
-    gender: 'Female',
-    date_of_birth: '1988-04-12',
-    marital_status: 'Married',
-    pan_number: 'ABCDE1234F',
-    uan_number: '100928374615',
-    bank_name: 'Silicon Valley Bank',
-    bank_account_number: '489201928374',
-    bank_ifsc: 'SVBK0001928',
-  },
-  {
-    id: 'emp-001',
-    login_id: 'OIALRI20260002',
-    role: 'EMPLOYEE',
-    first_name: 'Alex',
-    last_name: 'Rivera',
-    email: 'alex.rivera@acme.com',
-    phone: '+1 (555) 392-1049',
-    department: 'Product & Design',
-    job_position: 'Lead UX/UI Designer',
-    date_of_joining: '2023-01-10',
-    manager_id: 'admin-001',
-    manager_name: 'Sarah Jenkins',
-    avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150',
-    about: 'Lead UX/UI Designer passionate about crafting intuitive user experiences and modern visual design systems.',
-    what_i_love_about_job: 'Solving complex interaction problems and designing pixel-perfect user interfaces.',
-    hobbies: ['Photography', 'UI Motion Design', 'Synthesizers', 'Bouldering'],
-    skills: ['Figma', 'UI/UX Design', 'Design Systems', 'User Research', 'Prototyping'],
-    certifications: ['Google UX Design Professional Certificate', 'Nielsen Norman Group UX Master'],
-    address: '1280 Market Street, Apt 5B, San Francisco, CA',
-    personal_email: 'alex.rivera.design@gmail.com',
-    nationality: 'American',
-    gender: 'Non-binary',
-    date_of_birth: '1993-09-18',
-    marital_status: 'Single',
-    pan_number: 'FGHIJ5678K',
-    uan_number: '100847392019',
-    bank_name: 'Chase Bank',
-    bank_account_number: '920183746152',
-    bank_ifsc: 'CHAS0091827',
-  },
-  {
-    id: 'emp-002',
-    login_id: 'OIMACH20260003',
-    role: 'EMPLOYEE',
-    first_name: 'Marcus',
-    last_name: 'Chen',
-    email: 'marcus.chen@acme.com',
-    phone: '+1 (555) 782-9301',
-    department: 'Engineering',
-    job_position: 'Senior Backend Engineer',
-    date_of_joining: '2023-06-01',
-    manager_id: 'admin-001',
-    manager_name: 'Sarah Jenkins',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150',
-    about: 'Senior Backend Systems Architect specializing in distributed cloud services, PostgreSQL, and node.js microservices.',
-    what_i_love_about_job: 'Architecting high-throughput database systems and optimizing microservice latency.',
-    hobbies: ['Chess', 'Open Source Contributing', 'Espresso Brewing', 'Cycling'],
-    skills: ['TypeScript', 'Node.js', 'PostgreSQL', 'Docker', 'Kubernetes', 'AWS'],
-    certifications: ['AWS Certified Solutions Architect - Professional'],
-    address: '450 Mission Street, Floor 12, San Francisco, CA',
-    personal_email: 'marcus.chen.dev@gmail.com',
-    nationality: 'Canadian',
-    gender: 'Male',
-    date_of_birth: '1990-11-25',
-    marital_status: 'Single',
-    pan_number: 'KLMNO9012P',
-    uan_number: '100738291048',
-    bank_name: 'Bank of America',
-    bank_account_number: '109283746501',
-    bank_ifsc: 'BOFA0981273',
-  },
-  {
-    id: 'emp-003',
-    login_id: 'OIELRO20260004',
-    role: 'EMPLOYEE',
-    first_name: 'Elena',
-    last_name: 'Rostova',
-    email: 'elena.rostova@acme.com',
-    phone: '+1 (555) 849-2018',
-    department: 'Marketing',
-    job_position: 'Growth Marketing Director',
-    date_of_joining: '2024-02-15',
-    manager_id: 'admin-001',
-    manager_name: 'Sarah Jenkins',
-    avatar_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150',
-    about: 'Growth Marketing Director leading campaign optimization, brand positioning, and enterprise lead generation.',
-    what_i_love_about_job: 'Scaling brand visibility and translating analytics into high-impact growth strategies.',
-    hobbies: ['Travel Blogging', 'Modern Architecture', 'Tennis', 'Wine Tasting'],
-    skills: ['Growth Hacking', 'SEO/SEM', 'Content Strategy', 'Google Analytics', 'HubSpot'],
-    certifications: ['HubSpot Inbound Marketing Certified'],
-    address: '890 Broadway Street, Oakland, CA',
-    personal_email: 'elena.rostova@gmail.com',
-    nationality: 'German',
-    gender: 'Female',
-    date_of_birth: '1992-06-30',
-    marital_status: 'Married',
-    pan_number: 'QRSTU3456V',
-    uan_number: '100657483920',
-    bank_name: 'Wells Fargo',
-    bank_account_number: '748392019283',
-    bank_ifsc: 'WFAR0817263',
-  },
-  {
-    id: 'emp-004',
-    login_id: 'OIDEVA20260005',
-    role: 'EMPLOYEE',
-    first_name: 'Devon',
-    last_name: 'Vance',
-    email: 'devon.vance@acme.com',
-    phone: '+1 (555) 671-8293',
-    department: 'Finance',
-    job_position: 'Senior Financial Analyst',
-    date_of_joining: '2024-09-01',
-    manager_id: 'admin-001',
-    manager_name: 'Sarah Jenkins',
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150',
-    about: 'Corporate Financial Analyst handling budget forecasting, financial reporting, and statutory compliance.',
-    what_i_love_about_job: 'Building financial models that guide strategic executive decision making.',
-    hobbies: ['Stock Trading', 'Golf', 'Reading History', 'Trivia Nights'],
-    skills: ['Financial Modeling', 'Excel / Financial Analysis', 'Auditing', 'Risk Assessment'],
-    certifications: ['CPA Certified Public Accountant'],
-    address: '320 University Ave, Palo Alto, CA',
-    personal_email: 'devon.vance.cpa@gmail.com',
-    nationality: 'American',
-    gender: 'Male',
-    date_of_birth: '1995-02-14',
-    marital_status: 'Single',
-    pan_number: 'WXYZB7890C',
-    uan_number: '100548392017',
-    bank_name: 'First Republic Bank',
-    bank_account_number: '594039281726',
-    bank_ifsc: 'FRBK0192834',
-  },
-];
-
-const INITIAL_SALARIES: Record<string, Salary> = {
-  'admin-001': { user_id: 'admin-001', wage_period: 'MONTHLY', fixed_wage: 150000, basic_salary: 75000, hra: 37500, standard_allowance: 12495, performance_bonus: 6248, lta: 6250, fixed_allowance: 12507, pf: 9000, tax: 200, net_salary: 140800 },
-  'emp-001': { user_id: 'emp-001', wage_period: 'MONTHLY', fixed_wage: 120000, basic_salary: 60000, hra: 30000, standard_allowance: 9996, performance_bonus: 4998, lta: 5000, fixed_allowance: 10006, pf: 7200, tax: 200, net_salary: 112600 },
-  'emp-002': { user_id: 'emp-002', wage_period: 'MONTHLY', fixed_wage: 135000, basic_salary: 67500, hra: 33750, standard_allowance: 11246, performance_bonus: 5623, lta: 5625, fixed_allowance: 11256, pf: 8100, tax: 200, net_salary: 126700 },
-  'emp-003': { user_id: 'emp-003', wage_period: 'MONTHLY', fixed_wage: 95000, basic_salary: 47500, hra: 23750, standard_allowance: 7914, performance_bonus: 3957, lta: 3958, fixed_allowance: 7921, pf: 5700, tax: 200, net_salary: 89100 },
-  'emp-004': { user_id: 'emp-004', wage_period: 'MONTHLY', fixed_wage: 85000, basic_salary: 42500, hra: 21250, standard_allowance: 7081, performance_bonus: 3540, lta: 3542, fixed_allowance: 7087, pf: 5100, tax: 200, net_salary: 79700 },
-};
-
-const TODAY = new Date().toISOString().split('T')[0];
-
-const INITIAL_ATTENDANCE: AttendanceRecord[] = [
-  { id: 'att-101', user_id: 'admin-001', employee_name: 'Sarah Jenkins', department: 'Human Resources', date: TODAY, check_in: new Date(Date.now() - 4 * 3600 * 1000).toISOString(), status: 'PRESENT', work_hours: 4, break_time_mins: 30 },
-  { id: 'att-102', user_id: 'emp-001', employee_name: 'Alex Rivera', department: 'Product & Design', date: TODAY, check_in: new Date(Date.now() - 3 * 3600 * 1000).toISOString(), status: 'PRESENT', work_hours: 3, break_time_mins: 15 },
-  { id: 'att-103', user_id: 'emp-002', employee_name: 'Marcus Chen', department: 'Engineering', date: TODAY, check_in: new Date(Date.now() - 5 * 3600 * 1000).toISOString(), status: 'PRESENT', work_hours: 5, break_time_mins: 45 },
-  { id: 'att-104', user_id: 'emp-003', employee_name: 'Elena Rostova', department: 'Marketing', date: TODAY, check_in: new Date(Date.now() - 4 * 3600 * 1000).toISOString(), check_out: new Date(Date.now() - 3600 * 1000).toISOString(), status: 'HALF_DAY', work_hours: 3, break_time_mins: 15 },
-  { id: 'att-105', user_id: 'emp-004', employee_name: 'Devon Vance', department: 'Finance', date: TODAY, check_in: new Date().toISOString(), status: 'LEAVE' },
-];
-
-const INITIAL_TIME_OFF: TimeOffRecord[] = [
-  {
-    id: 'to-001',
-    user_id: 'emp-004',
-    employee_name: 'Devon Vance',
-    department: 'Finance',
-    type: 'PAID',
-    start_date: TODAY,
-    end_date: TODAY,
-    days_count: 1,
-    reason: 'Personal family obligation and medical checkup.',
-    status: 'APPROVED',
-    admin_comment: 'Approved. Enjoy your time off!',
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  },
-  {
-    id: 'to-002',
-    user_id: 'emp-001',
-    employee_name: 'Alex Rivera',
-    department: 'Product & Design',
-    type: 'SICK',
-    start_date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0],
-    days_count: 2,
-    reason: 'Scheduled wisdom tooth extraction procedure.',
-    document_url: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?w=500',
-    status: 'PENDING',
-    created_at: new Date(Date.now() - 3600000 * 5).toISOString(),
-  },
-  {
-    id: 'to-003',
-    user_id: 'emp-002',
-    employee_name: 'Marcus Chen',
-    department: 'Engineering',
-    type: 'PAID',
-    start_date: new Date(Date.now() + 86400000 * 10).toISOString().split('T')[0],
-    end_date: new Date(Date.now() + 86400000 * 15).toISOString().split('T')[0],
-    days_count: 5,
-    reason: 'Annual family summer vacation trip.',
-    status: 'PENDING',
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-];
-
 export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [employees, setEmployees] = useState<Profile[]>(INITIAL_PROFILES);
-  const [currentUser, setCurrentUser] = useState<Profile | null>(INITIAL_PROFILES[0]);
-  const [currentRole, setCurrentRole] = useState<UserRole>('ADMIN');
-  const [salaries, setSalaries] = useState<Record<string, Salary>>(INITIAL_SALARIES);
-  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>(INITIAL_ATTENDANCE);
-  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRecord[]>(INITIAL_TIME_OFF);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [employees, setEmployees] = useState<Profile[]>([]);
+  const [salaries, setSalaries] = useState<Record<string, Salary>>({});
+  const [attendanceLogs, setAttendanceLogs] = useState<AttendanceRecord[]>([]);
+  const [timeOffRequests, setTimeOffRequests] = useState<TimeOffRecord[]>([]);
+  const [onLeaveToday, setOnLeaveToday] = useState<Set<string>>(new Set());
+  const [currentUser, setCurrentUser] = useState<Profile | null>(null);
+  const [currentRoleState, setCurrentRoleState] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Live Punch-In State
-  const [isPunchedIn, setIsPunchedIn] = useState<boolean>(false);
-  const [punchInTime, setPunchInTime] = useState<Date | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [pendingPunch, setPendingPunch] = useState<{ date: string; checkIn: string | null } | null>(null);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isPunchedIn && punchInTime) {
-      timer = setInterval(() => {
-        const diff = Math.floor((new Date().getTime() - punchInTime.getTime()) / 1000);
-        setElapsedSeconds(diff > 0 ? diff : 0);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isPunchedIn, punchInTime]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      document.cookie = `hrms_session=active; path=/`;
-      document.cookie = `hrms_user_role=${currentRole}; path=/`;
-    }
-  }, [currentRole]);
-
-  useEffect(() => {
-    async function loadSupabaseData() {
-      try {
-        const { data: dbProfiles, error } = await supabase.from('profiles').select('*');
-        if (!error && dbProfiles && dbProfiles.length > 0) {
-          setEmployees(dbProfiles as Profile[]);
-          if (!currentUser) setCurrentUser(dbProfiles[0] as Profile);
-        }
-      } catch (err) {
-        console.log('Using local mock store fallback');
-      }
-    }
-    loadSupabaseData();
-  }, []);
-
-  const login = (loginIdOrEmail: string, pass: string): boolean => {
-    const query = loginIdOrEmail.trim().toLowerCase();
-    const found = employees.find(
-      (e) => e.login_id.toLowerCase() === query || e.email.toLowerCase() === query
-    );
-    if (found) {
-      setCurrentUser(found);
-      setCurrentRole(found.role);
-      document.cookie = `hrms_session=active; path=/`;
-      document.cookie = `hrms_user_role=${found.role}; path=/`;
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    setCurrentUser(null);
-    document.cookie = `hrms_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-    document.cookie = `hrms_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  };
+  const currentRole: UserRole = currentRoleState ?? currentUser?.role ?? 'EMPLOYEE';
+  const setCurrentRole = (role: UserRole) => setCurrentRoleState(role);
 
   // User Passwords Map
   const [userPasswords, setUserPasswords] = useState<Record<string, string>>({
     'admin-001': 'pass123',
     'emp-001': 'pass123',
     'emp-002': 'pass123',
-    'emp-003': 'pass123',
-    'emp-004': 'pass123',
   });
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const today = todayISO();
+      const [profileRes, salaryRes, attendanceRes, leaveRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('salaries').select('*'),
+        supabase.from('attendance').select('*').order('date', { ascending: false }),
+        supabase
+          .from('leave_requests')
+          .select('employee_id')
+          .eq('status', 'APPROVED')
+          .lte('from_date', today)
+          .gte('to_date', today),
+      ]);
+
+      const firstError = profileRes.error || salaryRes.error || attendanceRes.error;
+      if (firstError) throw firstError;
+
+      const people = (profileRes.data ?? []) as Profile[];
+      setEmployees(people);
+
+      const salaryMap: Record<string, Salary> = {};
+      for (const row of (salaryRes.data ?? []) as Salary[]) salaryMap[row.user_id] = row;
+      setSalaries(salaryMap);
+
+      setAttendanceLogs(
+        ((attendanceRes.data ?? []) as AttendanceRecord[]).map((a) => {
+          const p = people.find((e) => e.id === a.user_id);
+          return {
+            ...a,
+            employee_name: p ? `${p.first_name} ${p.last_name}`.trim() : 'Unknown',
+            department: p?.department ?? '—',
+          };
+        })
+      );
+
+      setOnLeaveToday(
+        leaveRes.error ? new Set() : new Set((leaveRes.data ?? []).map((r) => r.employee_id as string))
+      );
+
+      const savedId = typeof window !== 'undefined' ? window.localStorage.getItem(SESSION_KEY) : null;
+      if (savedId) {
+        const match = people.find((p) => p.id === savedId);
+        if (match) setCurrentUser(match);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not reach Supabase.';
+      console.error('[supabase] initial load failed:', message);
+      setLoadError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      await Promise.resolve();
+      if (!cancelled) await refresh();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [refresh]);
+
+  const punchInTime = useMemo<Date | null>(() => {
+    const date = todayISO();
+    if (pendingPunch?.date === date) {
+      return pendingPunch.checkIn ? new Date(pendingPunch.checkIn) : null;
+    }
+    if (!currentUser) return null;
+    const row = attendanceLogs.find((a) => a.user_id === currentUser.id && a.date === date);
+    return row?.check_in && !row.check_out ? new Date(row.check_in) : null;
+  }, [currentUser, attendanceLogs, pendingPunch]);
+
+  const isPunchedIn = punchInTime !== null;
+
+  useEffect(() => {
+    if (!isPunchedIn || !punchInTime) return;
+    const tick = () => {
+      const diff = Math.floor((Date.now() - punchInTime.getTime()) / 1000);
+      setElapsedSeconds(diff > 0 ? diff : 0);
+    };
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [isPunchedIn, punchInTime]);
+
+  const login = useCallback(async (loginIdOrEmail: string, pass: string): Promise<boolean> => {
+    const needle = loginIdOrEmail.trim().toLowerCase();
+    if (!needle) return false;
+
+    const profile = employees.find(
+      (e) => e.login_id.toLowerCase() === needle || (e.email && e.email.toLowerCase() === needle)
+    );
+
+    if (profile) {
+      setCurrentUser(profile);
+      window.localStorage.setItem(SESSION_KEY, profile.id);
+      document.cookie = `hrms_session=${profile.id}; path=/; max-age=86400`;
+      document.cookie = `hrms_user_role=${profile.role}; path=/; max-age=86400`;
+      return true;
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .or(`login_id.eq.${needle},email.eq.${needle}`)
+      .limit(1);
+
+    if (!error && data && data[0]) {
+      const p = data[0] as Profile;
+      setCurrentUser(p);
+      window.localStorage.setItem(SESSION_KEY, p.id);
+      document.cookie = `hrms_session=${p.id}; path=/; max-age=86400`;
+      document.cookie = `hrms_user_role=${p.role}; path=/; max-age=86400`;
+      return true;
+    }
+
+    return false;
+  }, [employees]);
+
+  const logout = useCallback(() => {
+    setCurrentUser(null);
+    window.localStorage.removeItem(SESSION_KEY);
+    document.cookie = 'hrms_session=; path=/; max-age=0';
+    document.cookie = 'hrms_user_role=; path=/; max-age=0';
+  }, []);
 
   const changePassword = (userId: string, oldPass: string, newPass: string) => {
     const currentPass = userPasswords[userId] || 'pass123';
@@ -367,7 +224,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: 'Current password entered is incorrect.' };
     }
     if (!newPass || newPass.trim().length < 6) {
-      return { success: false, message: 'New password must be at least 6 characters long.' };
+      return { success: false, message: 'New password must be at least 6 characters.' };
     }
     setUserPasswords((prev) => ({ ...prev, [userId]: newPass }));
     setEmployees((prev) =>
@@ -389,7 +246,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const sendPasswordResetOTP = (loginIdOrEmail: string) => {
     const query = loginIdOrEmail.trim().toLowerCase();
     const found = employees.find(
-      (e) => e.login_id.toLowerCase() === query || e.email.toLowerCase() === query
+      (e) => e.login_id.toLowerCase() === query || (e.email && e.email.toLowerCase() === query)
     );
     if (!found) {
       return { success: false, message: 'No employee account found with that Login ID or Email.' };
@@ -406,7 +263,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPasswordWithOTP = (loginIdOrEmail: string, newPass: string) => {
     const query = loginIdOrEmail.trim().toLowerCase();
     const found = employees.find(
-      (e) => e.login_id.toLowerCase() === query || e.email.toLowerCase() === query
+      (e) => e.login_id.toLowerCase() === query || (e.email && e.email.toLowerCase() === query)
     );
 
     if (!found) {
@@ -423,7 +280,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
     const updatedUser = { ...found, must_change_password: false };
     setCurrentUser(updatedUser);
-    setCurrentRole(found.role);
+    setCurrentRoleState(found.role);
     document.cookie = `hrms_session=active; path=/`;
     document.cookie = `hrms_user_role=${found.role}; path=/`;
 
@@ -442,7 +299,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const target = employees.find((e) => e.id === userId);
     if (target) {
       setCurrentUser(target);
-      setCurrentRole(target.role);
+      setCurrentRoleState(target.role);
       document.cookie = `hrms_user_role=${target.role}; path=/`;
     }
   };
@@ -450,9 +307,9 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handlePunchToggle = (notes?: string) => {
     if (!currentUser) return;
     const now = new Date();
+    const TODAY = todayISO();
     if (!isPunchedIn) {
-      setIsPunchedIn(true);
-      setPunchInTime(now);
+      setPendingPunch({ date: TODAY, checkIn: now.toISOString() });
       setElapsedSeconds(0);
 
       const newLog: AttendanceRecord = {
@@ -476,7 +333,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         notes,
       });
     } else {
-      setIsPunchedIn(false);
+      setPendingPunch({ date: TODAY, checkIn: null });
 
       setAttendanceLogs((prev) =>
         prev.map((log) => {
@@ -491,15 +348,6 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return log;
         })
       );
-
-      void (async () => {
-        const { error } = await supabase
-          .from('attendance')
-          .update({ check_out: now.toISOString() })
-          .eq('user_id', currentUser.id)
-          .eq('date', TODAY);
-        if (error) console.error('[supabase] attendance check-out failed:', error.message);
-      })();
     }
   };
 
@@ -518,7 +366,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       date_of_joining: new Date().toISOString().split('T')[0],
       avatar_url: empData.avatar_url || `https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150`,
       about: empData.about || `Newly onboarded ${empData.department} team member.`,
-      what_i_love_about_job: empData.what_i_love_about_job || 'Collaborating with high-performing colleagues to deliver innovative solutions.',
+      what_i_love_about_job: empData.what_i_love_about_job || 'Collaborating with colleagues.',
       hobbies: empData.hobbies || ['Reading', 'Hiking', 'Music'],
       skills: empData.skills || ['Communication', 'Teamwork', 'Problem Solving'],
       certifications: empData.certifications || [],
@@ -555,55 +403,57 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser((prev) => (prev ? { ...prev, ...updated } : prev));
     }
 
-    const { id, ...changes } = updated;
-    void safeWrite('profiles', 'update', changes, { column: 'id', value: id });
+    void safeWrite('profiles', 'update', updated, { column: 'id', value: updated.id });
   };
 
   const updateSalary = (userId: string, fixedWage: number, period: WagePeriod = 'MONTHLY') => {
-    const b = calculateSalaryBreakdown(fixedWage, period);
-    const sal: Salary = {
+    const updatedSalary = calculateSalaryBreakdown(fixedWage, period);
+    const newSalaryRecord: Salary = {
+      id: `sal-${userId}`,
       user_id: userId,
-      wage_period: period,
-      fixed_wage: b.monthly_wage,
-      basic_salary: b.basic_salary,
-      hra: b.hra,
-      standard_allowance: b.standard_allowance,
-      performance_bonus: b.performance_bonus,
-      lta: b.lta,
-      fixed_allowance: b.fixed_allowance,
-      pf: b.pf,
-      tax: b.tax,
-      net_salary: b.net_salary,
+      fixed_wage: fixedWage,
+      basic_salary: updatedSalary.basic_salary,
+      hra: updatedSalary.hra,
+      standard_allowance: updatedSalary.standard_allowance,
+      pf: updatedSalary.pf,
+      tax: updatedSalary.tax,
       updated_at: new Date().toISOString(),
     };
 
-    setSalaries((prev) => ({ ...prev, [userId]: sal }));
+    setSalaries((prev) => ({
+      ...prev,
+      [userId]: newSalaryRecord,
+    }));
 
     void safeWrite('salaries', 'upsert', {
       user_id: userId,
-      fixed_wage: sal.fixed_wage,
-      basic_salary: sal.basic_salary,
-      hra: sal.hra,
-      standard_allowance: sal.standard_allowance,
-      pf: sal.pf,
-      tax: sal.tax,
+      fixed_wage: fixedWage,
+      basic_salary: updatedSalary.basic_salary,
+      hra: updatedSalary.hra,
+      standard_allowance: updatedSalary.standard_allowance,
+      pf: updatedSalary.pf,
+      tax: updatedSalary.tax,
     });
   };
 
   const getSalaryBreakdown = (userId: string): SalaryBreakdown => {
-    const s = salaries[userId];
-    const wage = s ? s.fixed_wage : 60000;
-    const period = s?.wage_period || 'MONTHLY';
-    return calculateSalaryBreakdown(wage, period);
+    const record = salaries[userId];
+    const wage = record ? record.fixed_wage : 75000;
+    return calculateSalaryBreakdown(wage, 'MONTHLY');
   };
 
   const applyForTimeOff = (req: Omit<TimeOffRecord, 'id' | 'created_at' | 'status' | 'employee_name' | 'department'>) => {
-    const user = employees.find((e) => e.id === req.user_id) || currentUser;
+    const emp = employees.find((e) => e.id === req.user_id);
+    const start = new Date(req.start_date);
+    const end = new Date(req.end_date);
+    const daysCount = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+
     const newReq: TimeOffRecord = {
       ...req,
       id: `to-${Date.now()}`,
-      employee_name: user ? `${user.first_name} ${user.last_name}` : 'Employee',
-      department: user?.department || 'General',
+      employee_name: emp ? `${emp.first_name} ${emp.last_name}` : 'Employee',
+      department: emp?.department || 'Engineering',
+      days_count: daysCount,
       status: 'PENDING',
       created_at: new Date().toISOString(),
     };
@@ -642,26 +492,21 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     return {
-      paid_days: 24, // Excalidraw spec: 24 Days Paid Time Off
+      paid_days: 24,
       paid_used,
-      sick_days: 7,   // Excalidraw spec: 7 Days Sick Leave
+      sick_days: 7,
       sick_used,
       unpaid_used,
     };
   };
 
   const getUserLiveStatus = (userId: string): 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE' => {
-    const leaveToday = timeOffRequests.find(
-      (r) => r.user_id === userId && r.status === 'APPROVED' && r.start_date <= TODAY && r.end_date >= TODAY
-    );
-    if (leaveToday) return 'LEAVE';
-
-    const attToday = attendanceLogs.find((a) => a.user_id === userId && a.date === TODAY);
-    if (attToday && attToday.status === 'PRESENT') return 'PRESENT';
-    if (attToday && attToday.status === 'HALF_DAY') return 'HALF_DAY';
-    if (attToday && attToday.status === 'LEAVE') return 'LEAVE';
-
-    return 'ABSENT';
+    if (onLeaveToday.has(userId)) return 'LEAVE';
+    const log = attendanceLogs.find((a) => a.user_id === userId && a.date === todayISO());
+    if (!log) return 'ABSENT';
+    if (log.status === 'LEAVE') return 'LEAVE';
+    if (log.status === 'HALF_DAY') return 'HALF_DAY';
+    return log.check_in ? 'PRESENT' : 'ABSENT';
   };
 
   return (
@@ -693,6 +538,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getUserLeaveBalance,
         getUserLiveStatus,
         isLoading,
+        loadError,
+        refresh,
       }}
     >
       {children}

@@ -206,6 +206,17 @@ export default function EmployeeProfilePage() {
                   onChange={(e) => setField('nationality', e.target.value)}
                   disabled={!editing}
                 />
+                <Select
+                  label="Marital status"
+                  value={form.marital_status || ''}
+                  onChange={(e) => setField('marital_status', e.target.value)}
+                  disabled={!editing}
+                >
+                  <option value="">Not specified</option>
+                  <option value="Single">Single</option>
+                  <option value="Married">Married</option>
+                  <option value="Other">Other</option>
+                </Select>
               </div>
               <Textarea
                 label="Address"
@@ -217,7 +228,23 @@ export default function EmployeeProfilePage() {
             </Card>
 
             <Card>
-              <CardHeader title="Banking" subtitle="Used for payroll disbursement" />
+              <CardHeader title="Statutory &amp; banking" subtitle="Used for payroll disbursement" />
+              <div className="hr-field-group">
+                <Input
+                  label="PAN"
+                  value={form.pan_number || ''}
+                  onChange={(e) => setField('pan_number', e.target.value.toUpperCase())}
+                  disabled={!editing}
+                  placeholder="ABCDE1234F"
+                />
+                <Input
+                  label="UAN"
+                  value={form.uan_number || ''}
+                  onChange={(e) => setField('uan_number', e.target.value)}
+                  disabled={!editing}
+                  placeholder="100000000000"
+                />
+              </div>
               <div className="hr-field-group">
                 <Input
                   label="Bank name"

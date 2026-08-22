@@ -16,10 +16,8 @@ import {
   useToast,
   type Column,
 } from '@/components/ui';
-import { useApprovals } from '@/lib/hooks';
-import type { LeaveStatus, TimeOffRecord } from '@/lib/types/hrms';
-
-type Row = TimeOffRecord;
+import { useLeaveRequests } from '@/lib/hooks';
+import type { LeaveRequest, LeaveStatus } from '@/lib/types/hrms';
 
 const FILTERS: Array<{ id: LeaveStatus | 'ALL'; label: string }> = [
   { id: 'PENDING', label: 'Pending' },
@@ -32,50 +30,54 @@ const dateFmt = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short
 const fmt = (iso: string) => (iso ? dateFmt.format(new Date(iso)) : '—');
 
 export function ApprovalsInbox() {
-  const { requests, counts, filter, setFilter, query, setQuery, decide, actingId } = useApprovals();
+  const { requests, counts, filter, setFilter, query, setQuery, decide, actingId, loading, migrationPending } =
+    useLeaveRequests('all');
   const showToast = useToast();
-  const [rejecting, setRejecting] = useState<TimeOffRecord | null>(null);
+  const [rejecting, setRejecting] = useState<LeaveRequest | null>(null);
   const [comment, setComment] = useState('');
 
-  const approve = async (row: TimeOffRecord) => {
-    await decide(row.id, 'APPROVED');
-    showToast(`Approved ${row.days_count} day(s) for ${row.employee_name}.`, 'success');
+  const approve = async (row: LeaveRequest) => {
+    const ok = await decide(row.id, 'APPROVED');
+    showToast(
+      ok ? `Approved ${row.total_days} day(s) for ${row.employee_name}.` : 'Could not approve — please retry.',
+      ok ? 'success' : 'error'
+    );
   };
 
   const confirmReject = async () => {
     if (!rejecting) return;
-    await decide(rejecting.id, 'REJECTED', comment.trim() || undefined);
-    showToast(`Rejected the request from ${rejecting.employee_name}.`, 'info');
+    const ok = await decide(rejecting.id, 'REJECTED', comment.trim() || undefined);
+    showToast(
+      ok ? `Rejected the request from ${rejecting.employee_name}.` : 'Could not reject — please retry.',
+      ok ? 'info' : 'error'
+    );
     setRejecting(null);
     setComment('');
   };
 
-  const columns: Column<Row>[] = [
+  const columns: Column<LeaveRequest>[] = [
     {
       header: 'Employee',
       render: (row) => (
         <div className="hr-cell-stack">
           <span className="hr-cell-primary">{row.employee_name}</span>
-          <span className="hr-cell-secondary">{row.department}</span>
+          <span className="hr-cell-secondary">{row.department_name}</span>
         </div>
       ),
     },
-    { header: 'Type', render: (row) => <Badge tone="muted">{row.type}</Badge> },
+    { header: 'Type', render: (row) => <Badge tone="muted">{row.leave_type_name}</Badge> },
     {
       header: 'Dates',
       render: (row) => (
         <div className="hr-cell-stack">
           <span>
-            {fmt(row.start_date)} → {fmt(row.end_date)}
+            {fmt(row.from_date)} → {fmt(row.to_date)}
           </span>
-          <span className="hr-cell-secondary">{row.days_count} day(s)</span>
+          <span className="hr-cell-secondary">{row.total_days} day(s)</span>
         </div>
       ),
     },
-    {
-      header: 'Reason',
-      render: (row) => <span className="hr-cell-clamp">{row.reason || '—'}</span>,
-    },
+    { header: 'Reason', render: (row) => <span className="hr-cell-clamp">{row.reason || '—'}</span> },
     { header: 'Status', render: (row) => <StatusBadge status={row.status} /> },
     {
       header: '',
@@ -96,7 +98,7 @@ export function ApprovalsInbox() {
             </Button>
           </div>
         ) : (
-          <span className="hr-cell-secondary">{row.admin_comment || 'Closed'}</span>
+          <span className="hr-cell-secondary">{row.rejection_reason || (row.approved_by_name ? `by ${row.approved_by_name}` : 'Closed')}</span>
         ),
     },
   ];
@@ -141,7 +143,13 @@ export function ApprovalsInbox() {
           />
         </div>
 
-        {requests.length === 0 ? (
+        {migrationPending ? (
+          <EmptyState
+            icon={Inbox}
+            title="Migration required"
+            description="Run db_schema/migrations/002_org_structure_and_leave.sql to enable approvals."
+          />
+        ) : requests.length === 0 && !loading ? (
           <EmptyState
             icon={Inbox}
             title={filter === 'PENDING' ? 'Nothing waiting on you' : 'No requests here'}
@@ -152,7 +160,7 @@ export function ApprovalsInbox() {
             }
           />
         ) : (
-          <Table<Row> columns={columns} data={requests} rowKey={(r) => r.id} />
+          <Table<LeaveRequest> columns={columns} data={requests} loading={loading} rowKey={(r) => r.id} />
         )}
       </Card>
 
@@ -160,7 +168,7 @@ export function ApprovalsInbox() {
         isOpen={!!rejecting}
         onClose={() => setRejecting(null)}
         title="Reject leave request"
-        subtitle={rejecting ? `${rejecting.employee_name} · ${rejecting.days_count} day(s)` : undefined}
+        subtitle={rejecting ? `${rejecting.employee_name} · ${rejecting.total_days} day(s)` : undefined}
         size="sm"
         footer={
           <>
