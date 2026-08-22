@@ -9,7 +9,7 @@ export function PageHeader({
 }) {
   return (
     <div className="hr-page-header">
-      <div>
+      <div className="hr-page-header-title">
         <h1>{title}</h1>
         {subtitle && <p className="hr-subtext">{subtitle}</p>}
       </div>

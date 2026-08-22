@@ -2,6 +2,7 @@ export { Button, IconButton } from './Button';
 export { Card, CardHeader } from './Card';
 export { Badge, StatusBadge, statusTone } from './Badge';
 export { StatCard, StatGrid } from './StatCard';
+export { Skeleton, SkeletonCircle, SkeletonRow, SkeletonStatCard } from './Skeleton';
 export { Table } from './Table';
 export type { Column } from './Table';
 export { Tabs } from './Tabs';

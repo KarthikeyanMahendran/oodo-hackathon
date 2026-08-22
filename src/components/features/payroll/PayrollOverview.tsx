@@ -12,7 +12,7 @@ interface DeptRow {
 }
 
 export function PayrollOverview({ onNavigate }: { onNavigate: (tab: string) => void }) {
-  const { totals, byDepartment, period, register } = usePayroll();
+  const { totals, byDepartment, period, register, loading } = usePayroll();
 
   const columns: Column<DeptRow>[] = [
     { header: 'Department', accessor: 'department' },
@@ -29,7 +29,7 @@ export function PayrollOverview({ onNavigate }: { onNavigate: (tab: string) => v
     },
   ];
 
-  if (register.length === 0) {
+  if (!loading && register.length === 0) {
     return (
       <EmptyState
         icon={Calculator}
@@ -43,7 +43,7 @@ export function PayrollOverview({ onNavigate }: { onNavigate: (tab: string) => v
 
   return (
     <div className="hr-stack">
-      <StatGrid>
+      <StatGrid loading={loading} count={4}>
         <StatCard
           label="Active Employees"
           value={totals.headcount}
@@ -83,7 +83,7 @@ export function PayrollOverview({ onNavigate }: { onNavigate: (tab: string) => v
             </Button>
           }
         />
-        <Table<DeptRow> columns={columns} data={byDepartment} rowKey={(r) => r.department} />
+        <Table<DeptRow> columns={columns} data={byDepartment} loading={loading} skeletonRows={3} rowKey={(r) => r.department} />
       </Card>
 
       <Card>

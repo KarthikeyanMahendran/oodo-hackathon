@@ -10,7 +10,7 @@ import { SalaryModal } from './SalaryModal';
 type Row = PayslipRow;
 
 export function SalaryStructures() {
-  const { register } = usePayroll();
+  const { register, loading } = usePayroll();
   const showToast = useToast();
   const [query, setQuery] = useState('');
   const [editing, setEditing] = useState<PayslipRow | null>(null);
@@ -76,7 +76,7 @@ export function SalaryStructures() {
             aria-label="Search employees"
           />
         </div>
-        <Table<Row> columns={columns} data={rows} rowKey={(r) => r.user_id} emptyMessage="No employees found." />
+        <Table<Row> columns={columns} data={rows} loading={loading} rowKey={(r) => r.user_id} emptyMessage="No employees found." />
       </Card>
 
       <SalaryModal

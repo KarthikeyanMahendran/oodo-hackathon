@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { SkeletonRow } from './Skeleton';
 
 export interface Column<T> {
   header: string;
@@ -14,6 +15,7 @@ export interface TableProps<T> {
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
+  skeletonRows?: number;
   emptyMessage?: string;
   rowKey?: (row: T, index: number) => string;
   onRowClick?: (row: T) => void;
@@ -23,20 +25,11 @@ export function Table<T extends object>({
   columns,
   data,
   loading = false,
+  skeletonRows = 5,
   emptyMessage = 'No records found.',
   rowKey,
   onRowClick,
 }: TableProps<T>) {
-  if (loading) {
-    return (
-      <div className="hr-table-wrapper">
-        <div className="hr-loading">
-          <span className="hr-spinner" aria-hidden /> Loading…
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="hr-table-wrapper">
       <table className="hr-table">
@@ -50,7 +43,9 @@ export function Table<T extends object>({
           </tr>
         </thead>
         <tbody>
-          {data.length === 0 ? (
+          {loading ? (
+            Array.from({ length: skeletonRows }, (_, i) => <SkeletonRow key={i} columns={columns.length} />)
+          ) : data.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="hr-loading">
                 {emptyMessage}

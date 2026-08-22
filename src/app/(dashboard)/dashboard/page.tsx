@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Users, CalendarOff, Building2, ShieldCheck, Clock, Plus, ArrowRight } from 'lucide-react';
-import { Card, Button, Table, StatusBadge, type Column } from '@/components/ui';
+import { Card, Button, Table, StatusBadge, SkeletonStatCard, type Column } from '@/components/ui';
 import { EmployeeModal } from '@/components/features/employees/EmployeeModal';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useAttendance, useEmployees, useOrgStructure } from '@/lib/hooks';
@@ -46,7 +46,7 @@ function StatTile({ icon, tone, value, label, sub }: TileProps) {
 }
 
 export default function DashboardPage() {
-  const { currentUser, currentRole, employees } = useHRMS();
+  const { currentUser, currentRole, employees, isLoading } = useHRMS();
   const { allEmployees } = useEmployees();
   const { departments } = useOrgStructure();
   const { summary, teamToday } = useAttendance();
@@ -121,34 +121,40 @@ export default function DashboardPage() {
       </div>
 
       <div className="hr-tile-grid">
-        <StatTile
-          icon={<Users size={20} />}
-          tone="blue"
-          value={allEmployees.length}
-          label="Total employees"
-          sub={`${allEmployees.length} active`}
-        />
-        <StatTile
-          icon={<CalendarOff size={20} />}
-          tone="green"
-          value={onLeaveToday}
-          label="On leave today"
-          sub="Approved time off"
-        />
-        <StatTile
-          icon={<Building2 size={20} />}
-          tone="indigo"
-          value={departments.length}
-          label="Departments"
-          sub="Across the org"
-        />
-        <StatTile
-          icon={<ShieldCheck size={20} />}
-          tone="amber"
-          value={adminCount}
-          label="Admins"
-          sub="With elevated access"
-        />
+        {isLoading ? (
+          Array.from({ length: 4 }, (_, i) => <SkeletonStatCard key={i} />)
+        ) : (
+          <>
+            <StatTile
+              icon={<Users size={20} />}
+              tone="blue"
+              value={allEmployees.length}
+              label="Total employees"
+              sub={`${allEmployees.length} active`}
+            />
+            <StatTile
+              icon={<CalendarOff size={20} />}
+              tone="green"
+              value={onLeaveToday}
+              label="On leave today"
+              sub="Approved time off"
+            />
+            <StatTile
+              icon={<Building2 size={20} />}
+              tone="indigo"
+              value={departments.length}
+              label="Departments"
+              sub="Across the org"
+            />
+            <StatTile
+              icon={<ShieldCheck size={20} />}
+              tone="amber"
+              value={adminCount}
+              label="Admins"
+              sub="With elevated access"
+            />
+          </>
+        )}
       </div>
 
       <div className="hr-split">
@@ -215,6 +221,7 @@ export default function DashboardPage() {
           <Table<Profile>
             columns={joinerColumns}
             data={newJoiners}
+            loading={isLoading}
             rowKey={(r) => r.id}
             emptyMessage="No employees yet."
           />

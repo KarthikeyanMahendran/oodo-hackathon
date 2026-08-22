@@ -22,6 +22,8 @@ export interface Profile {
   department_id?: string | null;
   designation_id?: string | null;
   avatar_url?: string | null;
+  /** From migration 003. Undefined on rows fetched before that migration runs — treat as active. */
+  is_active?: boolean;
   
   // Tab 1: Resume / Bio
   about?: string;

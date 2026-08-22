@@ -44,7 +44,7 @@ interface LogRow {
 
 export default function AttendancePage() {
   const { currentRole } = useHRMS();
-  const { myLogs, teamToday, summary, query, setQuery, isPunchedIn, elapsedLabel, togglePunch } = useAttendance();
+  const { myLogs, teamToday, summary, query, setQuery, isPunchedIn, elapsedLabel, togglePunch, loading } = useAttendance();
   const showToast = useToast();
   const [notes, setNotes] = useState('');
   const [active, setActive] = useState('me');
@@ -124,7 +124,7 @@ export default function AttendancePage() {
       </Card>
 
       {isAdmin && (
-        <StatGrid>
+        <StatGrid loading={loading} count={4}>
           <StatCard label="Present" value={summary.PRESENT} tone="success" icon={<CalendarCheck size={44} />} />
           <StatCard label="On Leave" value={summary.LEAVE} tone="info" icon={<Clock size={44} />} />
           <StatCard label="Absent" value={summary.ABSENT} tone="danger" icon={<UserX size={44} />} />
@@ -139,6 +139,7 @@ export default function AttendancePage() {
             <Table<LogRow>
               columns={logColumns}
               data={myLogs}
+              loading={loading}
               rowKey={(r) => r.id}
               emptyMessage="No attendance recorded yet."
             />
@@ -154,7 +155,7 @@ export default function AttendancePage() {
                 aria-label="Search employees"
               />
             </div>
-            <Table<TeamRow> columns={teamColumns} data={teamToday} rowKey={(r) => r.id} />
+            <Table<TeamRow> columns={teamColumns} data={teamToday} loading={loading} rowKey={(r) => r.id} />
           </Card>
         )}
       </Tabs>

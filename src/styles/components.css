@@ -18,20 +18,19 @@ input[type="number"] {
 
 /* --- Base Cards --- */
 .hr-card,
-.hr-card,
 .hr-stat-card {
   background: var(--white);
   border-radius: var(--radius);
   border: 1px solid var(--gray-200);
   box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   transition: var(--transition-normal);
   position: relative;
   overflow: visible;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 8px 0;
+  gap: 6px;
+  margin: 0;
 }
 
 .hr-container {
@@ -43,45 +42,45 @@ input[type="number"] {
 
 .hr-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
 }
 
 
 
 .hr-stat-label {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
   color: var(--gray-500);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 .hr-stat-value {
-  font-size: 28px;
-  font-weight: 800;
+  font-size: 21px;
+  font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
 .hr-stat-change {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-top: 1px;
 }
 
 .hr-stat-icon {
   position: absolute;
-  right: -10px;
-  top: -10px;
-  font-size: 64px;
-  opacity: 0.05;
-  transform: rotate(-10deg);
+  right: 10px;
+  top: 10px;
+  opacity: 0.12;
   pointer-events: none;
 }
+.hr-stat-icon svg { width: 26px; height: 26px; }
 
 .hr-dark-card {
   background: linear-gradient(135deg, #000, #898989);
@@ -1400,3 +1399,21 @@ button.hr-btn-link:hover {
   gap: var(--space-sm);
   flex-shrink: 0;
 }
+
+/* --- Skeleton loading --- */
+.hr-skeleton {
+  display: inline-block;
+  background: linear-gradient(90deg, var(--gray-100) 25%, var(--gray-200) 37%, var(--gray-100) 63%);
+  background-size: 400% 100%;
+  animation: hr-shimmer 1.4s ease infinite;
+}
+@keyframes hr-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hr-skeleton { animation: none; background: var(--gray-100); }
+}
+
+.hr-skeleton-row td { padding-top: 14px; padding-bottom: 14px; }
+.hr-skeleton-card { gap: 8px; }

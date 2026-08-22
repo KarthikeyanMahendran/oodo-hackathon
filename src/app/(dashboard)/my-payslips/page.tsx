@@ -17,7 +17,7 @@ interface PayslipMonth {
 const MONTH_FMT = new Intl.DateTimeFormat('en-IN', { month: 'long', year: 'numeric' });
 
 export default function MyPayslipsPage() {
-  const { currentUser, getSalaryBreakdown } = useHRMS();
+  const { currentUser, getSalaryBreakdown, isLoading } = useHRMS();
   const [openPeriod, setOpenPeriod] = useState<string | null>(null);
 
   const breakdown = currentUser ? getSalaryBreakdown(currentUser.id) : null;
@@ -38,7 +38,7 @@ export default function MyPayslipsPage() {
     });
   }, [breakdown]);
 
-  if (!currentUser || !breakdown) {
+  if (!isLoading && (!currentUser || !breakdown)) {
     return <EmptyState icon={ReceiptText} title="Not signed in" description="Sign in to view your payslips." />;
   }
 
@@ -68,10 +68,10 @@ export default function MyPayslipsPage() {
       <PageHeader title="My Payslips" subtitle="Monthly salary statements" />
       <Card>
         <CardHeader title="Payslip history" subtitle="Last six pay periods" />
-        <Table<PayslipMonth> columns={columns} data={months} rowKey={(r) => r.period} />
+        <Table<PayslipMonth> columns={columns} data={months} loading={isLoading && !breakdown} rowKey={(r) => r.period} />
       </Card>
 
-      {openPeriod && (
+      {openPeriod && currentUser && breakdown && (
         <PayslipModal
           period={openPeriod}
           onClose={() => setOpenPeriod(null)}

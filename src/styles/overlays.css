@@ -4,81 +4,30 @@
    ============================================ */
 
 .hr-page-header {
-  padding: 24px 32px;
-  background: white;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
-  margin-bottom: 0;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.hr-page-header .header-content {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  max-width: 1600px;
-  margin: 0 auto;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding: 14px var(--space-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 }
-.hr-page-header .title-group {
+.hr-page-header-title {
   flex: 1;
+  min-width: 0;
 }
-.hr-page-header .page-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.8px;
-  margin: 0 0 4px 0;
-}
-.hr-page-header .page-subtitle {
-  font-size: 13px;
-  color: #64748b;
+.hr-page-header h1 {
   margin: 0;
-  letter-spacing: -0.1px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  line-height: 1.3;
 }
-.hr-page-header .header-back-btn,
-.header-back-btn {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 36px !important;
-  height: 36px !important;
-  min-width: 36px !important;
-  min-height: 36px !important;
-  border-radius: 8px !important;
-  background: #f1f5f9 !important;
-  color: #1e293b !important;
-  border: 1px solid #e2e8f0 !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  flex-shrink: 0 !important;
-  padding: 0 !important;
-}
-.hr-page-header .header-back-btn:hover,
-.header-back-btn:hover {
-  background: #e2e8f0 !important;
-  color: #0f172a !important;
-  border-color: #cbd5e1 !important;
-  transform: translateX(-2px);
-}
-.hr-page-header .header-back-btn svg,
-.header-back-btn svg {
-  width: 18px !important;
-  height: 18px !important;
-  stroke: #1e293b !important;
-  color: #1e293b !important;
-  display: block !important;
-  flex-shrink: 0 !important;
-  pointer-events: none;
-}
-.hr-page-header .header-back-btn:hover svg,
-.header-back-btn:hover svg {
-  stroke: #0f172a !important;
-  color: #0f172a !important;
-}
-.hr-page-header .header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.hr-page-header .hr-subtext {
+  margin: 1px 0 0;
 }
 .hr-modal-overlay {
   position: fixed;

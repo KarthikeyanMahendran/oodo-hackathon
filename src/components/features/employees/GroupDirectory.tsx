@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { LucideIcon } from 'lucide-react';
 import { Card, CardHeader, Table, Badge, EmptyState, type Column } from '@/components/ui';
 import { useDirectoryGroups, type DirectoryGroup } from '@/lib/hooks/useDirectoryGroups';
+import { useHRMS } from '@/lib/context/HRMSContext';
 
 export function GroupDirectory({
   groupBy,
@@ -18,6 +19,7 @@ export function GroupDirectory({
   columnLabel: string;
   icon: LucideIcon;
 }) {
+  const { isLoading } = useHRMS();
   const groups = useDirectoryGroups(groupBy);
   const total = groups.reduce((n, g) => n + g.headcount, 0);
 
@@ -56,10 +58,10 @@ export function GroupDirectory({
     <div className="hr-stack">
       <Card>
         <CardHeader title={title} subtitle={subtitle} />
-        {groups.length === 0 ? (
+        {!isLoading && groups.length === 0 ? (
           <EmptyState icon={icon} title={`No ${columnLabel.toLowerCase()}s yet`} description="Add employees to populate this view." />
         ) : (
-          <Table<DirectoryGroup> columns={columns} data={groups} rowKey={(r) => r.name} />
+          <Table<DirectoryGroup> columns={columns} data={groups} loading={isLoading} rowKey={(r) => r.name} />
         )}
       </Card>
     </div>

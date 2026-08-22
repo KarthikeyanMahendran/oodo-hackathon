@@ -1,3 +1,5 @@
+import { SkeletonStatCard } from './Skeleton';
+
 export interface StatCardProps {
   label: string;
   value: React.ReactNode;
@@ -34,6 +36,20 @@ export function StatCard({ label, value, change, tone = 'default', icon }: StatC
   );
 }
 
-export function StatGrid({ children }: { children: React.ReactNode }) {
-  return <div className="hr-stat-grid">{children}</div>;
+export function StatGrid({
+  children,
+  loading = false,
+  count = 3,
+}: {
+  children: React.ReactNode;
+  /** Swaps children for skeleton tiles while data is in flight. */
+  loading?: boolean;
+  /** How many skeleton tiles to render — match the real tile count so nothing jumps. */
+  count?: number;
+}) {
+  return (
+    <div className="hr-stat-grid">
+      {loading ? Array.from({ length: count }, (_, i) => <SkeletonStatCard key={i} />) : children}
+    </div>
+  );
 }

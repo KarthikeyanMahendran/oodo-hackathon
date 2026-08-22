@@ -46,6 +46,7 @@ interface HRMSContextType {
     emp: Omit<Profile, 'id' | 'created_at' | 'login_id'> & { initialSalary?: number }
   ) => { profile: Profile; tempPass: string };
   updateProfile: (profile: Partial<Profile> & { id: string }) => void;
+  setEmployeeActive: (userId: string, isActive: boolean) => Promise<boolean>;
 
   updateSalary: (userId: string, fixedWage: number, period?: WagePeriod) => void;
   getSalaryBreakdown: (userId: string) => SalaryBreakdown;
@@ -120,11 +121,17 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         leaveRes.error ? new Set() : new Set((leaveRes.data ?? []).map((r) => r.employee_id as string))
       );
 
-      // Restore the signed-in profile across reloads.
+      // Restore the signed-in profile across reloads. Also re-runs after every
+      // write, so a session for a user deactivated mid-session is dropped here.
       const savedId = typeof window !== 'undefined' ? window.localStorage.getItem(SESSION_KEY) : null;
       if (savedId) {
         const match = people.find((p) => p.id === savedId);
-        if (match) setCurrentUser(match);
+        if (match && match.is_active !== false) {
+          setCurrentUser(match);
+        } else if (match) {
+          setCurrentUser(null);
+          window.localStorage.removeItem(SESSION_KEY);
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Could not reach Supabase.';
@@ -196,6 +203,9 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     const profile = (data?.[0] as Profile | undefined) ?? undefined;
     if (!profile) return false;
+    // is_active is undefined on rows fetched before migration 003 — only a
+    // literal false blocks sign-in.
+    if (profile.is_active === false) return false;
 
     setCurrentUser(profile);
     window.localStorage.setItem(SESSION_KEY, profile.id);
@@ -360,6 +370,30 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [currentUser?.id]
   );
 
+  /**
+   * Toggles an employee between active and inactive. A deactivated employee
+   * can no longer sign in (see login() above). Returns false — and reverts
+   * the optimistic update — if migration 003 has not added the is_active
+   * column yet, so the UI never shows a status that did not actually persist.
+   */
+  const setEmployeeActive = useCallback(
+    async (userId: string, isActive: boolean): Promise<boolean> => {
+      const previous = employees.find((e) => e.id === userId)?.is_active;
+      setEmployees((prev) => prev.map((e) => (e.id === userId ? { ...e, is_active: isActive } : e)));
+
+      const result = await safeWrite('profiles', 'update', { is_active: isActive }, { column: 'id', value: userId });
+      const persisted = result.ok && !result.droppedColumns.includes('is_active');
+
+      if (!persisted) {
+        setEmployees((prev) => prev.map((e) => (e.id === userId ? { ...e, is_active: previous } : e)));
+        return false;
+      }
+      await refresh();
+      return true;
+    },
+    [employees, refresh]
+  );
+
   const getSalaryBreakdown = useCallback(
     (userId: string): SalaryBreakdown =>
       calculateSalaryBreakdown(salaries[userId]?.fixed_wage ?? 0, 'MONTHLY'),
@@ -395,6 +429,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       handlePunchToggle,
       addEmployee,
       updateProfile,
+      setEmployeeActive,
       updateSalary,
       getSalaryBreakdown,
       getUserLiveStatus,
@@ -405,7 +440,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [
       currentUser, currentRole, setCurrentRole, switchUser, logout, login, employees, salaries,
       attendanceLogs, isPunchedIn, punchInTime, elapsedSeconds, handlePunchToggle,
-      addEmployee, updateProfile, updateSalary, getSalaryBreakdown, getUserLiveStatus, isLoading, loadError, refresh,
+      addEmployee, updateProfile, setEmployeeActive, updateSalary, getSalaryBreakdown, getUserLiveStatus, isLoading, loadError, refresh,
     ]
   );
 

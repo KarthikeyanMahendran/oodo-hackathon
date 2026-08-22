@@ -11,7 +11,7 @@ import { PayslipModal } from './PayslipModal';
 type Row = PayslipRow;
 
 export function PayrollRegister() {
-  const { register, totals, period, runPayroll, processing, isProcessed } = usePayroll();
+  const { register, totals, period, runPayroll, processing, isProcessed, loading } = usePayroll();
   const showToast = useToast();
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<PayslipRow | null>(null);
@@ -110,6 +110,7 @@ export function PayrollRegister() {
         <Table<Row>
           columns={columns}
           data={rows}
+          loading={loading}
           rowKey={(r) => r.user_id}
           emptyMessage="No employees match this search."
         />

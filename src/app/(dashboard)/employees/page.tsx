@@ -12,6 +12,7 @@ import {
   Input,
   Select,
   StatusBadge,
+  Badge,
   EmptyState,
   type Column,
 } from '@/components/ui';
@@ -22,7 +23,7 @@ import { formatCurrency } from '@/lib/utils/salaryCalculator';
 import type { Profile } from '@/lib/types/hrms';
 
 export default function EmployeeDirectoryPage() {
-  const { employees, departments, query, setQuery, department, setDepartment, salaries } = useEmployees();
+  const { employees, departments, query, setQuery, department, setDepartment, salaries, loading } = useEmployees();
   const { currentRole, getUserLiveStatus } = useHRMS();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -44,6 +45,11 @@ export default function EmployeeDirectoryPage() {
           </span>
         </Link>
       ),
+    },
+    {
+      header: 'Status',
+      render: (row) =>
+        row.is_active === false ? <Badge tone="muted">Inactive</Badge> : <Badge tone="success">Active</Badge>,
     },
     {
       header: 'Department',
@@ -110,14 +116,14 @@ export default function EmployeeDirectoryPage() {
           </Select>
         </div>
 
-        {employees.length === 0 ? (
+        {!loading && employees.length === 0 ? (
           <EmptyState
             icon={Users}
             title="No employees match"
             description="Adjust the search or department filter to see more people."
           />
         ) : (
-          <Table<Profile> columns={columns} data={employees} rowKey={(r) => r.id} />
+          <Table<Profile> columns={columns} data={employees} loading={loading} rowKey={(r) => r.id} />
         )}
       </Card>
 
