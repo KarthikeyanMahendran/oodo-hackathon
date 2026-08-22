@@ -7,6 +7,11 @@ import { AppShell } from '@/components/layout/AppShell';
 export const metadata: Metadata = {
   title: 'Dayflow People',
   description: 'Employees, attendance, leave, approvals and statutory payroll.',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
