@@ -6,7 +6,7 @@ A human resource management system covering the full employee lifecycle — dire
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Postgres-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Styling](https://img.shields.io/badge/Styling-pure%20CSS-264de4?logo=css3&logoColor=white)](#design-system)
+[![Deployment](https://img.shields.io/badge/Deployment-Vercel-000000?logo=vercel&logoColor=white)](https://oodo-hackathon-chi.vercel.app/)
 
 ---
 
@@ -56,7 +56,7 @@ A month calendar shows who is away, colour-coded by leave type, for the individu
 Statutory breakdown derived from each employee's wage — basic, HRA, allowances, PF and professional tax — with a monthly register, per-employee payslips, and a cost-by-department roll-up. Salary structures are editable with a live preview of the resulting breakdown before saving.
 
 ### Additional modules
-Expense and medical claims with OCR receipt scanning, IT asset inventory and assignment, a company notice board, and DocuSeal-backed e-signature templates and envelopes.
+Expense and medical claims with OCR receipt scanning, IT asset inventory and assignment, and a company notice board.
 
 ---
 
@@ -101,8 +101,6 @@ Copy `.env.example` to `.env.local`. That file is gitignored and must never be c
 | `NEXT_PUBLIC_SUPABASE_URL` | Client | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Client | Publishable key — **anon, never service_role** |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server | Used by route handlers; bypasses RLS |
-| `DOCUSEAL_API_KEY` | Server | Optional — e-signature falls back to demo mode without it |
-| `DOCUSEAL_URL` | Server | Optional — defaults to `https://api.docuseal.com` |
 
 > ⚠️ Anything prefixed `NEXT_PUBLIC_` is compiled into the JavaScript bundle every visitor downloads. A `service_role` key placed there is readable by anyone and bypasses every RLS policy. Use the **anon** key.
 
@@ -123,7 +121,7 @@ Run them in order in the Supabase SQL editor:
 
 Migration `002` also **backfills**: it reads the existing `department` / `job_position` text columns, creates the corresponding rows, populates the foreign keys, seeds three leave types, migrates any `time_off` rows, and allocates the current year's balances.
 
-**Starting from an empty project instead?** [`db_schema/four.sql`](db_schema/four.sql) creates the core tables, enums, e-signature and add-on tables in one idempotent script. Follow it with migrations `002`–`003` for the normalised org structure and deactivation support. [`db_schema/seed_auth.sql`](db_schema/seed_auth.sql) then creates Supabase Auth users linked to the seeded profiles.
+**Starting from an empty project instead?** [`db_schema/four.sql`](db_schema/four.sql) creates the core tables, enums, and add-on tables in one idempotent script. Follow it with migrations `002`–`003` for the normalised org structure and deactivation support. [`db_schema/seed_auth.sql`](db_schema/seed_auth.sql) then creates Supabase Auth users linked to the seeded profiles.
 
 ### Entity relationships
 
@@ -352,6 +350,8 @@ The repository builds clean: **zero TypeScript errors, zero ESLint errors.**
 
 ## Deployment
 
+**Live Deployment URL**: [https://oodo-hackathon-chi.vercel.app](https://oodo-hackathon-chi.vercel.app)
+
 Deploys to Vercel with zero configuration — the framework preset, build command and output directory are all detected automatically.
 
 1. Import the repository at [vercel.com](https://vercel.com) → **Add New… → Project**
@@ -370,7 +370,6 @@ Documented honestly rather than glossed over:
 - **RLS policies are written but not exercised**, because they gate on `auth.uid()`, which is `NULL` until real authentication is in place.
 - **Payslip history is projected**, not stored. The live schema keeps one salary row per employee, so past months are rendered from the current structure rather than a historical snapshot.
 - **Claims, IT assets and the notice board fall back to in-memory demo data** until migration `004` has been run.
-- **E-signature runs in demo mode** unless `DOCUSEAL_API_KEY` is set.
 
 ---
 
