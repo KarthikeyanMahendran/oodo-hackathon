@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, LogOut, MonitorCheck, User } from 'lucide-react';
+import { Menu, LogOut, MonitorCheck, User, ChevronDown } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useAttendance } from '@/lib/hooks';
 
@@ -37,10 +37,6 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
     TITLES[pathname] ??
     (pathname.startsWith('/employees/') ? 'Employee Profile' : 'Dayflow');
 
-  const initials = currentUser
-    ? `${currentUser.first_name?.[0] ?? ''}${currentUser.last_name?.[0] ?? ''}`.toUpperCase()
-    : 'SJ';
-
   const userDisplayName = currentUser
     ? `${currentUser.first_name} ${currentUser.last_name}`
     : 'Sarah Jenkins';
@@ -50,8 +46,6 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
       ? 'HR Admin'
       : currentUser.job_position || 'Employee'
     : 'HR Admin';
-
-  const userAvatarUrl = currentUser?.avatar_url;
 
   return (
     <header className="hr-topbar">
@@ -69,7 +63,7 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
           <span>{isPunchedIn ? 'Checked in' : 'Checked out'}</span>
         </span>
 
-        {/* Top-Right Circular User Profile Avatar */}
+        {/* Top-Right User Name Button (No profile photo) */}
         <div style={{ position: 'relative', marginLeft: '12px' }}>
           <button
             type="button"
@@ -77,48 +71,25 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
             style={{
               background: 'transparent',
               border: 'none',
-              padding: 0,
+              padding: '6px 10px',
               margin: 0,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
+              gap: '6px',
+              borderRadius: '8px',
               outline: 'none',
+              fontSize: '14px',
+              fontWeight: 600,
+              color: 'var(--text, #18181b)',
+              transition: 'background-color 0.15s ease',
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--surface-hover, #f4f4f5)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
             aria-label="User profile menu"
           >
-            {userAvatarUrl ? (
-              <img
-                src={userAvatarUrl}
-                alt={userDisplayName}
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  objectFit: 'cover',
-                  border: '2px solid var(--border, #e4e4e7)',
-                  display: 'block',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                }}
-              />
-            ) : (
-              <span
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  backgroundColor: '#f59e0b',
-                  color: '#ffffff',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-                }}
-              >
-                {initials}
-              </span>
-            )}
+            <span>{userDisplayName}</span>
+            <ChevronDown size={14} style={{ color: 'var(--text-muted, #71717a)' }} />
           </button>
 
           {/* Clean Profile Dropdown Menu */}
@@ -126,7 +97,7 @@ export function Topbar({ onToggleSidebar }: { onToggleSidebar: () => void }) {
             <div
               style={{
                 position: 'absolute',
-                top: 'calc(100% + 8px)',
+                top: 'calc(100% + 6px)',
                 right: 0,
                 width: '200px',
                 backgroundColor: 'var(--surface-raised, #ffffff)',
