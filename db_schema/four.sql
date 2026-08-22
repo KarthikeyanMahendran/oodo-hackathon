@@ -81,28 +81,26 @@ CREATE TABLE IF NOT EXISTS time_off (
 ALTER TABLE time_off ADD COLUMN IF NOT EXISTS admin_comment TEXT;
 
 -- ==========================================
--- 3. E-SIGNATURE TABLES
+-- 3. E-SIGNATURE TABLE (Single consolidated table)
 -- ==========================================
-CREATE TABLE IF NOT EXISTS esign_template_types (
-    template_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    template_name VARCHAR NOT NULL,
-    signer_config JSONB,
-    document_url TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
+DROP TABLE IF EXISTS esign_envelopes CASCADE;
+DROP TABLE IF EXISTS esign_template_types CASCADE;
 
 CREATE TABLE IF NOT EXISTS esign_envelopes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    template_id UUID REFERENCES esign_template_types(template_id) ON DELETE SET NULL,
-    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-    docuseal_submission_id VARCHAR NOT NULL UNIQUE,
     document_name VARCHAR NOT NULL,
+    document_url TEXT NOT NULL,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    signer_name VARCHAR NOT NULL,
+    signer_email VARCHAR NOT NULL,
+    signer_role VARCHAR DEFAULT 'Participant',
+    docuseal_submission_id VARCHAR UNIQUE,
     status VARCHAR DEFAULT 'Pending',
     signed_document_url TEXT,
     signed_on TIMESTAMPTZ,
+    placed_fields JSONB DEFAULT '[]'::jsonb,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-ALTER TABLE esign_envelopes ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES profiles(id) ON DELETE CASCADE;
 
 -- ==========================================
 -- 4. NEW ADD-ON FEATURES (CLAIMS, ASSETS, FEED)
@@ -152,22 +150,26 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE salaries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance ENABLE ROW LEVEL SECURITY;
 ALTER TABLE time_off ENABLE ROW LEVEL SECURITY;
-ALTER TABLE esign_template_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE esign_envelopes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE it_assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_feed ENABLE ROW LEVEL SECURITY;
 
+-- Fix Foreign Key Constraints on Profiles (if present from legacy schema)
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fk;
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+
 -- Core Policies
 DROP POLICY IF EXISTS "Users view/update own profile" ON profiles;
 DROP POLICY IF EXISTS "Admins full access profiles" ON profiles;
-CREATE POLICY "Users view/update own profile" ON profiles FOR ALL USING (auth.uid() = id);
-CREATE POLICY "Admins full access profiles" ON profiles FOR ALL USING (is_admin());
+DROP POLICY IF EXISTS "Everyone can view profiles" ON profiles;
+DROP POLICY IF EXISTS "Allow all access profiles" ON profiles;
+CREATE POLICY "Allow all access profiles" ON profiles FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Users view own salary" ON salaries;
 DROP POLICY IF EXISTS "Admins full access salaries" ON salaries;
-CREATE POLICY "Users view own salary" ON salaries FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Admins full access salaries" ON salaries FOR ALL USING (is_admin());
+DROP POLICY IF EXISTS "Allow all access salaries" ON salaries;
+CREATE POLICY "Allow all access salaries" ON salaries FOR ALL USING (true);
 
 DROP POLICY IF EXISTS "Users manage own attendance" ON attendance;
 DROP POLICY IF EXISTS "Admins full access attendance" ON attendance;
@@ -180,15 +182,8 @@ CREATE POLICY "Users manage own time_off" ON time_off FOR ALL USING (auth.uid() 
 CREATE POLICY "Admins full access time_off" ON time_off FOR ALL USING (is_admin());
 
 -- E-Sign Policies
-DROP POLICY IF EXISTS "Everyone views templates" ON esign_template_types;
-DROP POLICY IF EXISTS "Admins manage templates" ON esign_template_types;
-CREATE POLICY "Everyone views templates" ON esign_template_types FOR SELECT USING (true);
-CREATE POLICY "Admins manage templates" ON esign_template_types FOR ALL USING (is_admin());
-
-DROP POLICY IF EXISTS "Users view own envelopes" ON esign_envelopes;
-DROP POLICY IF EXISTS "Admins manage envelopes" ON esign_envelopes;
-CREATE POLICY "Users view own envelopes" ON esign_envelopes FOR SELECT USING (user_id IS NULL OR auth.uid() = user_id);
-CREATE POLICY "Admins manage envelopes" ON esign_envelopes FOR ALL USING (is_admin());
+DROP POLICY IF EXISTS "Allow access esign_envelopes" ON esign_envelopes;
+CREATE POLICY "Allow access esign_envelopes" ON esign_envelopes FOR ALL USING (true);
 
 -- Add-On Policies
 DROP POLICY IF EXISTS "Users manage own claims" ON claims;

@@ -6,37 +6,26 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('esign_envelopes')
-      .select(`
-        *,
-        esign_template_types (
-          template_name
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error || !data || data.length === 0) {
       return NextResponse.json({
         success: true,
         source: 'memory_fallback',
-        data: memoryEnvelopes,
+        envelopes: memoryEnvelopes,
       });
     }
 
-    // Format template_name from joined relation
-    const formattedData = data.map((env: Record<string, unknown> & { esign_template_types?: { template_name?: string } }) => ({
-      ...env,
-      template_name: env.esign_template_types?.template_name || 'Custom Document',
-    }));
-
     return NextResponse.json({
       success: true,
-      data: formattedData,
+      envelopes: data,
     });
-  } catch (err: unknown) {
+  } catch (err: any) {
     return NextResponse.json({
       success: true,
       source: 'memory_fallback',
-      data: memoryEnvelopes,
+      envelopes: memoryEnvelopes,
     });
   }
 }

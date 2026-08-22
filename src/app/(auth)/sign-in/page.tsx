@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
   Activity,
   LogIn,
   ShieldCheck,
-  User,
   Users,
   LayoutGrid,
   CalendarCheck,
@@ -62,7 +62,7 @@ const SLIDE_INTERVAL_MS = 4500;
 
 export default function SignInPage() {
   const router = useRouter();
-  const { login, employees, isLoading, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
+  const { login, isLoading, sendPasswordResetOTP, resetPasswordWithOTP } = useHRMS();
 
   const [slide, setSlide] = useState(0);
 
@@ -70,14 +70,6 @@ export default function SignInPage() {
     const id = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), SLIDE_INTERVAL_MS);
     return () => clearInterval(id);
   }, []);
-
-  // Sign-in shortcuts are built from the real directory, not a hardcoded list.
-  const quickAccounts = employees.slice(0, 2).map((e) => ({
-    loginId: e.login_id,
-    role: e.role === 'ADMIN' ? 'HR Admin' : e.job_position || 'Employee',
-    name: `${e.first_name} ${e.last_name}`.trim(),
-    icon: e.role === 'ADMIN' ? ShieldCheck : User,
-  }));
 
   const [loginIdOrEmail, setLoginIdOrEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -106,10 +98,6 @@ export default function SignInPage() {
       setErrorMsg('No employee found for that login ID or email.');
       setIsSubmitting(false);
     }
-  };
-
-  const quickLogin = async (loginId: string) => {
-    if (await login(loginId, 'pass123')) router.push('/dashboard');
   };
 
   const openResetModal = () => {
@@ -159,13 +147,14 @@ export default function SignInPage() {
       <div className="hr-login-form-pane">
         <div className="hr-login-form-inner">
           <div className="hr-login-brand">
-            <span className="hr-login-brand-icon" aria-hidden>
-              <Activity size={20} strokeWidth={2.4} />
-            </span>
-            <div>
-              <h1 className="hr-login-brand-title">Dayflow</h1>
-              <p className="hr-login-brand-sub">People</p>
-            </div>
+            <Image
+              src="/gemini-svg.svg"
+              alt="Dayflow"
+              width={220}
+              height={66}
+              style={{ objectFit: 'contain', height: '52px', width: 'auto' }}
+              priority
+            />
           </div>
 
           <div className="hr-login-heading">
@@ -206,35 +195,6 @@ export default function SignInPage() {
               {isSubmitting ? 'Signing in…' : 'Sign in'}
             </Button>
           </form>
-
-          {quickAccounts.length > 0 && (
-            <>
-              <div className="hr-auth-divider">
-                <span>Or continue as</span>
-              </div>
-
-              <div className="hr-auth-demos">
-                {quickAccounts.map((acc) => {
-                  const Icon = acc.icon;
-                  return (
-                    <button
-                      key={acc.loginId}
-                      type="button"
-                      className="hr-demo-card"
-                      onClick={() => quickLogin(acc.loginId)}
-                    >
-                      <div className="hr-demo-head">
-                        <span className="hr-demo-role">{acc.role}</span>
-                        <Icon size={14} aria-hidden />
-                      </div>
-                      <span className="hr-monospace hr-demo-id">{acc.loginId}</span>
-                      <span className="hr-cell-secondary">{acc.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
 
           {isLoading && <p className="hr-form-hint">Loading directory…</p>}
 

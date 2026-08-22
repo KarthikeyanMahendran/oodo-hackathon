@@ -70,4 +70,5 @@ next-env.d.ts
 *.excalidraw
 *.pdf
 *.md
+*.docx
 
