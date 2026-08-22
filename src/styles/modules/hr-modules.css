@@ -390,3 +390,208 @@ a.hr-btn-secondary {
   gap: 6px;
   text-decoration: none;
 }
+
+/* ============================================
+   DASHBOARD
+   ============================================ */
+.hr-greeting {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+.hr-greeting-title {
+  margin: 0 0 2px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
+/* --- Stat tiles --- */
+.hr-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+.hr-tile {
+  gap: 0;
+  margin: 0;
+  padding: var(--space-lg);
+}
+.hr-tile-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-md);
+}
+.hr-tile-icon.is-blue   { background: #eef2ff; color: #4f6ef7; }
+.hr-tile-icon.is-green  { background: #ecfdf5; color: #10b981; }
+.hr-tile-icon.is-indigo { background: #eef2ff; color: #6366f1; }
+.hr-tile-icon.is-amber  { background: #fffbeb; color: #f59e0b; }
+.hr-tile-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.hr-tile-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 2px;
+}
+.hr-tile-sub {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+/* --- Split panels --- */
+.hr-split {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: var(--space-md);
+  align-items: start;
+}
+.hr-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+.hr-panel-head .hr-card-title { margin: 0 0 2px; }
+.hr-panel-head .hr-subtext { margin: 0; }
+.hr-panel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hr-panel-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.hr-panel-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- Count tiles --- */
+.hr-count-row {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+.hr-count-tile {
+  flex: 1;
+  min-width: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 14px 10px;
+  background: var(--accent-subtle);
+  border-radius: var(--radius);
+}
+.hr-count-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.hr-count-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* --- Punch summary --- */
+.hr-punch-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+.hr-punch-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.hr-punch-time {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Department bars --- */
+.hr-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.hr-bar-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 28px;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 13px;
+}
+.hr-bar-label {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.hr-bar-track {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--gray-100);
+  overflow: hidden;
+}
+.hr-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: var(--accent);
+  min-width: 4px;
+}
+.hr-bar-value {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 1100px) {
+  .hr-split { grid-template-columns: 1fr; }
+}
+
+/* --- Member chips --- */
+.hr-member-chips {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.hr-member-chips .hr-avatar { text-decoration: none; border: 2px solid var(--surface); }
+.hr-member-more {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: 2px;
+}

@@ -43,7 +43,7 @@ export default function SignUpPage() {
       });
 
       login(profile.login_id, password);
-      router.push('/employees');
+      router.push('/dashboard');
     }, 600);
   };
 

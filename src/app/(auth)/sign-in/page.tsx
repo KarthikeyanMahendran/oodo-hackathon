@@ -28,7 +28,7 @@ export default function SignInPage() {
 
     setTimeout(() => {
       if (login(loginIdOrEmail, password)) {
-        router.push('/employees');
+        router.push('/dashboard');
       } else {
         setErrorMsg('Invalid login ID / email or password. Try a demo account below.');
         setIsSubmitting(false);
@@ -37,7 +37,7 @@ export default function SignInPage() {
   };
 
   const quickLogin = (loginId: string) => {
-    if (login(loginId, 'pass123')) router.push('/employees');
+    if (login(loginId, 'pass123')) router.push('/dashboard');
   };
 
   return (

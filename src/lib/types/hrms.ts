@@ -32,10 +32,10 @@ export interface Profile {
   nationality?: string;
   gender?: string;
   date_of_birth?: string;
-  marital_status?: string;
-  pan_number?: string;
-  uan_number?: string;
-  
+  marital_status?: string; // not persisted — see db_schema/migrations/001
+  pan_number?: string;     // not persisted — see db_schema/migrations/001
+  uan_number?: string;     // not persisted — see db_schema/migrations/001
+
   // Banking
   bank_name?: string;
   bank_account_number?: string;

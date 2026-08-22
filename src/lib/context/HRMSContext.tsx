@@ -14,6 +14,12 @@ import { calculateSalaryBreakdown, SalaryBreakdown } from '../utils/salaryCalcul
 import { supabase } from '../supabase/client';
 import { safeWrite } from '../supabase/write';
 
+/** Generated at call time, outside render, so it never runs during a render pass. */
+function generateTempPassword(): string {
+  const n = Math.floor(1000 + Math.random() * 9000);
+  return `Welcome@${n}`;
+}
+
 export function generateLoginId(firstName: string, lastName: string, year = '2026', seq = 1): string {
   const f = (firstName || 'EM').trim().substring(0, 2).toUpperCase().padEnd(2, 'X');
   const l = (lastName || 'PY').trim().substring(0, 2).toUpperCase().padEnd(2, 'X');
@@ -285,9 +291,9 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   // Live Punch-In State
-  const [isPunchedIn, setIsPunchedIn] = useState<boolean>(true);
-  const [punchInTime, setPunchInTime] = useState<Date | null>(new Date(Date.now() - 4 * 3600 * 1000));
-  const [elapsedSeconds, setElapsedSeconds] = useState<number>(4 * 3600);
+  const [isPunchedIn, setIsPunchedIn] = useState<boolean>(false);
+  const [punchInTime, setPunchInTime] = useState<Date | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -412,7 +418,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newId = crypto.randomUUID();
     const seqNum = employees.length + 1;
     const autoLoginId = generateLoginId(empData.first_name, empData.last_name, '2026', seqNum);
-    const tempPass = `Welcome@${Math.floor(1000 + Math.random() * 9000)}`;
+    const tempPass = generateTempPassword();
 
     const newProfile: Profile = {
       ...empData,

@@ -22,10 +22,15 @@
   --primary-active: #374151;
   --primary-subtle: #f3f4f6;
 
+  /* Accent — active navigation and primary links */
+  --accent: #4f6ef7;
+  --accent-subtle: #eef2ff;
+
   /* Semantic — the only four hues in the system */
   --success: #10b981;
   --success-bg: #ecfdf5;
   --success-border: #a7f3d0;
+  --success-text: #047857;
   --warning: #f59e0b;
   --warning-bg: #fffbeb;
   --warning-border: #fde68a;

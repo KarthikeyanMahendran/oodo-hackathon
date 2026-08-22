@@ -217,22 +217,7 @@ export default function EmployeeProfilePage() {
             </Card>
 
             <Card>
-              <CardHeader title="Statutory & banking" subtitle="Used for payroll disbursement" />
-              <div className="hr-field-group">
-                <Input
-                  label="PAN"
-                  value={form.pan_number || ''}
-                  onChange={(e) => setField('pan_number', e.target.value.toUpperCase())}
-                  disabled={!editing}
-                  placeholder="ABCDE1234F"
-                />
-                <Input
-                  label="UAN"
-                  value={form.uan_number || ''}
-                  onChange={(e) => setField('uan_number', e.target.value)}
-                  disabled={!editing}
-                />
-              </div>
+              <CardHeader title="Banking" subtitle="Used for payroll disbursement" />
               <div className="hr-field-group">
                 <Input
                   label="Bank name"

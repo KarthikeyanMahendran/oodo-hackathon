@@ -30,7 +30,7 @@ export function middleware(request: NextRequest) {
   // Authenticated user trying to access sign-in / sign-up
   if (sessionCookie && isAuthPath) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 

@@ -1,5 +1,5 @@
-import EmployeeDirectoryPage from './(dashboard)/employees/page';
+import { redirect } from 'next/navigation';
 
 export default function Home() {
-  return <EmployeeDirectoryPage />;
+  redirect('/dashboard');
 }
