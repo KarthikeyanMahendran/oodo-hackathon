@@ -6,6 +6,11 @@
 --   002 — departments, designations, leave_types, leave_balances,
 --         leave_requests, plus views and indexes. Run 002 to enable the
 --         department/designation dropdowns and the normalised leave flow.
+--   003 — profiles.is_active (employee deactivation)
+--   004 — claims, it_assets, company_feed (Expenses / IT Assets / Notice Board)
+--
+-- db_schema/seed_auth.sql creates real Supabase Auth users linked to the
+-- seeded profiles, and adds two more sample employees.
 
 -- ---------------------------------------------------------------------------
 -- 1. Enums

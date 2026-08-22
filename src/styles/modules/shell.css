@@ -88,6 +88,11 @@
   font-weight: 500;
   color: var(--gray-600);
   text-decoration: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
   transition: var(--transition-fast);
 }
 .hr-sidenav-item:hover {
@@ -114,6 +119,28 @@
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+/* --- Sidebar accordion (e.g. E-Signature: Templates / Sent Documents) --- */
+.hr-sidenav-accordion-trigger {
+  width: 100%;
+}
+.hr-sidenav-chevron {
+  margin-left: auto;
+  display: inline-flex;
+  color: var(--text-subtle);
+}
+.hr-sidenav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 2px 27px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+}
+.hr-sidenav-subitem {
+  padding: 6px 10px;
+  font-size: 13.5px;
 }
 
 /* --- Main column --- */

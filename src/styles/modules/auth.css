@@ -115,6 +115,30 @@
 }
 .hr-auth-foot a:hover { border-color: var(--text); }
 
+/* --- Inline row with a form label and a secondary action beside it --- */
+.hr-form-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: 4px;
+}
+.hr-form-row-between .hr-form-label { margin: 0; }
+
+/* --- Small text-only action, e.g. "Forgot password?" --- */
+.hr-link-ghost {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.hr-link-ghost:hover { color: var(--text); }
+
 /* --- File upload --- */
 .hr-upload {
   display: flex;

@@ -13,6 +13,11 @@ function generateTempPassword(): string {
   return `Welcome@${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
+/** Six digits, generated fresh per request — never a fixed demo value. */
+function generateOTP(): string {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
 export function generateLoginId(firstName: string, lastName: string, year = '2026', seq = 1): string {
   const f = (firstName || 'XX').slice(0, 2).toUpperCase();
   const l = (lastName || 'XX').slice(0, 2).toUpperCase();
@@ -23,8 +28,6 @@ function todayISO(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-
-
 interface HRMSContextType {
   currentUser: Profile | null;
   currentRole: UserRole;
@@ -32,6 +35,15 @@ interface HRMSContextType {
   switchUser: (userId: string) => void;
   logout: () => void;
   login: (loginIdOrEmail: string, pass: string) => Promise<boolean>;
+  /**
+   * Sends a one-time code for password reset. The live schema stores no
+   * password hash and there is no email service wired up, so this cannot
+   * actually deliver mail — it returns the code for the caller to display,
+   * the same way a "magic code shown on screen" demo works with no backend.
+   */
+  sendPasswordResetOTP: (loginIdOrEmail: string) => { success: boolean; otp?: string; message: string };
+  /** Verifies the code the caller already checked and clears must_change_password. */
+  resetPasswordWithOTP: (loginIdOrEmail: string) => Promise<{ success: boolean; message: string }>;
 
   employees: Profile[];
   salaries: Record<string, Salary>;
@@ -178,13 +190,24 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearInterval(timer);
   }, [isPunchedIn, punchInTime]);
 
+  const findByLoginOrEmail = useCallback(
+    (loginIdOrEmail: string): Profile | undefined => {
+      const needle = loginIdOrEmail.trim().toLowerCase();
+      if (!needle) return undefined;
+      return employees.find(
+        (e) => e.login_id.toLowerCase() === needle || (e.email && e.email.toLowerCase() === needle)
+      );
+    },
+    [employees]
+  );
+
   /**
    * Authenticates against the `profiles` table.
    *
    * The live schema stores no password hash and the project has no auth.users
-   * rows, so a credential cannot be verified here. Wiring Supabase Auth (and
-   * linking profiles.id to auth.users.id) is the next step before this is
-   * exposed outside development.
+   * rows linked to profiles, so a credential cannot be verified here. Wiring
+   * Supabase Auth (and linking profiles.id to auth.users.id) is the next step
+   * before this is exposed outside development.
    */
   const login = useCallback(async (loginIdOrEmail: string, _password: string): Promise<boolean> => {
     void _password;
@@ -234,6 +257,59 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const setCurrentRole = useCallback((role: UserRole) => {
     setCurrentUser((prev) => (prev ? { ...prev, role } : prev));
   }, []);
+
+  /**
+   * Demo password-reset flow. There is nowhere to send real mail and no
+   * password hash to check, so this only ever gates on possession of a valid
+   * login ID or email — it is not a security boundary, only a UX flow that
+   * clears must_change_password on a genuine account.
+   */
+  const sendPasswordResetOTP = useCallback(
+    (loginIdOrEmail: string) => {
+      const found = findByLoginOrEmail(loginIdOrEmail);
+      if (!found) {
+        return { success: false, message: 'No employee account found with that login ID or email.' };
+      }
+      const otp = generateOTP();
+      return {
+        success: true,
+        otp,
+        message: `No email service is configured, so the code is shown here instead of being sent: ${otp}`,
+      };
+    },
+    [findByLoginOrEmail]
+  );
+
+  const resetPasswordWithOTP = useCallback(
+    async (loginIdOrEmail: string): Promise<{ success: boolean; message: string }> => {
+      const found = findByLoginOrEmail(loginIdOrEmail);
+      if (!found) {
+        return { success: false, message: 'No account found matching those credentials.' };
+      }
+      if (found.is_active === false) {
+        return { success: false, message: 'This account has been deactivated.' };
+      }
+
+      const result = await safeWrite(
+        'profiles',
+        'update',
+        { must_change_password: false },
+        { column: 'id', value: found.id }
+      );
+      if (!result.ok) {
+        return { success: false, message: 'Could not update the account — please try again.' };
+      }
+
+      setEmployees((prev) => prev.map((e) => (e.id === found.id ? { ...e, must_change_password: false } : e)));
+      setCurrentUser({ ...found, must_change_password: false });
+      window.localStorage.setItem(SESSION_KEY, found.id);
+      document.cookie = `hrms_session=${found.id}; path=/; max-age=86400`;
+      document.cookie = `hrms_user_role=${found.role}; path=/; max-age=86400`;
+
+      return { success: true, message: 'Verified — you are now signed in.' };
+    },
+    [findByLoginOrEmail]
+  );
 
   const handlePunchToggle = useCallback(
     (notes?: string) => {
@@ -332,6 +408,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...empData,
         id: newId,
         login_id: loginId,
+        must_change_password: true,
         created_at: new Date().toISOString(),
       };
 
@@ -351,6 +428,7 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         department_id: profile.department_id,
         designation_id: profile.designation_id,
         avatar_url: profile.avatar_url,
+        must_change_password: true,
       }).then(() => refresh());
 
       return { profile, tempPass };
@@ -420,6 +498,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       switchUser,
       logout,
       login,
+      sendPasswordResetOTP,
+      resetPasswordWithOTP,
       employees,
       salaries,
       attendanceLogs,
@@ -438,8 +518,8 @@ export const HRMSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       refresh,
     }),
     [
-      currentUser, currentRole, setCurrentRole, switchUser, logout, login, employees, salaries,
-      attendanceLogs, isPunchedIn, punchInTime, elapsedSeconds, handlePunchToggle,
+      currentUser, currentRole, setCurrentRole, switchUser, logout, login, sendPasswordResetOTP, resetPasswordWithOTP,
+      employees, salaries, attendanceLogs, isPunchedIn, punchInTime, elapsedSeconds, handlePunchToggle,
       addEmployee, updateProfile, setEmployeeActive, updateSalary, getSalaryBreakdown, getUserLiveStatus, isLoading, loadError, refresh,
     ]
   );

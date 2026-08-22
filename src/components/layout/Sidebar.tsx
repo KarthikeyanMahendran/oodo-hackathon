@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -16,6 +17,14 @@ import {
   ReceiptText,
   CheckSquare,
   Activity,
+  FileSignature,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Send,
+  MessageSquare,
+  Receipt,
+  Monitor,
 } from 'lucide-react';
 import { useHRMS } from '@/lib/context/HRMSContext';
 import { useLeaveRequests } from '@/lib/hooks';
@@ -39,6 +48,8 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
   const { pendingCount } = useLeaveRequests('all');
   const isAdmin = currentRole === 'ADMIN';
 
+  const [esignOpen, setEsignOpen] = useState(() => pathname.startsWith('/esign'));
+
   const sections: NavSection[] = [
     { items: [{ href: '/dashboard', label: 'Dashboard', icon: LayoutGrid }] },
     {
@@ -51,8 +62,11 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
       ],
     },
     {
-      label: 'HR',
+      label: 'HR & Workspace',
       items: [
+        { href: '/feed', label: 'Notice Board', icon: MessageSquare },
+        { href: '/expenses', label: 'Expenses', icon: Receipt },
+        { href: '/assets', label: 'IT Assets', icon: Monitor },
         { href: '/profile', label: 'My Profile', icon: UserRoundPen },
         { href: '/attendance', label: 'My Attendance', icon: CalendarCheck },
         { href: '/time-off', label: 'My Leave', icon: CalendarDays },
@@ -62,7 +76,7 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
       ],
     },
     {
-      label: 'Payroll',
+      label: 'Payroll & Approvals',
       items: [
         { href: '/payroll', label: 'Payroll', icon: Wallet, adminOnly: true },
         { href: '/approvals', label: 'Approvals', icon: CheckSquare, adminOnly: true, badge: pendingCount },
@@ -111,6 +125,43 @@ export function Sidebar({ open, onNavigate }: { open: boolean; onNavigate?: () =
             </div>
           );
         })}
+
+        <div className="hr-sidenav-section">
+          <span className="hr-sidenav-label">Documents</span>
+          <button
+            type="button"
+            onClick={() => setEsignOpen((prev) => !prev)}
+            className={`hr-sidenav-item hr-sidenav-accordion-trigger ${pathname.startsWith('/esign') ? 'active' : ''}`.trim()}
+            aria-expanded={esignOpen}
+          >
+            <FileSignature size={18} strokeWidth={1.9} aria-hidden />
+            <span>E-Signature</span>
+            <span className="hr-sidenav-chevron" aria-hidden>
+              {esignOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+            </span>
+          </button>
+
+          {esignOpen && (
+            <div className="hr-sidenav-subitems">
+              <Link
+                href="/esign/templates"
+                onClick={onNavigate}
+                className={`hr-sidenav-item hr-sidenav-subitem ${pathname.startsWith('/esign/templates') ? 'active' : ''}`.trim()}
+              >
+                <FileText size={15} aria-hidden />
+                <span>Templates</span>
+              </Link>
+              <Link
+                href="/esign/envelopes"
+                onClick={onNavigate}
+                className={`hr-sidenav-item hr-sidenav-subitem ${pathname.startsWith('/esign/envelopes') ? 'active' : ''}`.trim()}
+              >
+                <Send size={15} aria-hidden />
+                <span>Sent Documents</span>
+              </Link>
+            </div>
+          )}
+        </div>
       </nav>
     </aside>
   );
